@@ -92,6 +92,21 @@ function getTransactionIdFromTx(tx) {
   return eventFromTx(tx, InkEvents.TransactionInitiated).args.id.toNumber()
 }
 
+async function eventsFromContract(contract, eventName, args = {}) {
+  let events = await filterGetSync(contract[eventName](args, { fromBlock: 0 }))
+
+  return events
+}
+
+async function eventFromContract(contract, eventName, args = {}) {
+  let events = await eventsFromContract(contract, eventName, args)
+
+  assert.equal(events.length, 1, `Expected 1 '${eventName}' event, but found ${events.length}`)
+
+  return events[0]
+}
+
+
 function filterGetSync(filter) {
   return new Promise((resolve, reject) => {
     filter.get((error, logs) => {
@@ -366,7 +381,8 @@ module.exports = {
   states: InkStates,
   eventFromTx: eventFromTx,
   eventsFromTx: eventsFromTx,
-  filterGetSync: filterGetSync,
+  eventsFromContract: eventsFromContract,
+  eventFromContract: eventFromContract,
   getTransactionIdFromTx: getTransactionIdFromTx,
   getTransaction: getTransaction,
   getBalance: getBalance,

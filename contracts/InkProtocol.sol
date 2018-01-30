@@ -579,10 +579,10 @@ contract InkProtocol is InkProtocolInterface, StandardToken {
     if (success) {
       assembly {
         // TODO: Switch to 'if' statement when we're on solc 0.4.19.
-        switch eq(returndatasize(), 0x4)
+        switch eq(returndatasize(), 0x20)
         case 1 {
           let _freeMemPointer := mload(0x40)
-          returndatacopy(_freeMemPointer, 0, 0x4)
+          returndatacopy(_freeMemPointer, 0, 0x20)
           expiry := mload(_freeMemPointer)
         }
       }
