@@ -1,8 +1,12 @@
 const $util = require("./util")
 const InkProtocol = artifacts.require("./mocks/InkProtocolMock.sol")
-const ErroredPolicy = artifacts.require("./mocks/ErrorPolicyMock.sol")
+const ErrorPolicy = artifacts.require("./mocks/ErrorPolicyMock.sol")
 
 contract("InkProtocol", (accounts) => {
+  let buyer
+  let seller
+  let unknown
+
   beforeEach(async () => {
     buyer = accounts[1]
     seller = accounts[2]
@@ -11,9 +15,14 @@ contract("InkProtocol", (accounts) => {
 
   describe("#confirmTransactionAfterExpiry()", () => {
     it("fails for buyer", async () => {
-      let { protocol, transaction, policy } = await $util.buildTransaction(
-        buyer, seller, { finalState: $util.states.Accepted }
-      )
+      let {
+        protocol,
+        transaction,
+        policy
+      } = await $util.buildTransaction(buyer, seller, {
+        finalState: $util.states.Accepted
+      })
+
       let transactionExpiry = await policy.transactionExpiry();
       $util.advanceTime(transactionExpiry.toNumber())
 
@@ -21,9 +30,15 @@ contract("InkProtocol", (accounts) => {
     })
 
     it("fails for owner", async () => {
-      let { protocol, transaction, policy, owner } = await $util.buildTransaction(
-        buyer, seller, { finalState: $util.states.Accepted, owner: true }
-      )
+      let {
+        protocol,
+        transaction,
+        policy,
+        owner
+      } = await $util.buildTransaction(buyer, seller, {
+        finalState: $util.states.Accepted, owner: true
+      })
+
       let transactionExpiry = await policy.transactionExpiry();
       $util.advanceTime(transactionExpiry.toNumber())
 
@@ -31,9 +46,15 @@ contract("InkProtocol", (accounts) => {
     })
 
     it("fails for mediator", async () => {
-      let { protocol, transaction, policy, mediator } = await $util.buildTransaction(
-        buyer, seller, { finalState: $util.states.Accepted }
-      )
+      let {
+        protocol,
+        transaction,
+        policy,
+        mediator
+      } = await $util.buildTransaction(buyer, seller, {
+        finalState: $util.states.Accepted
+      })
+
       let transactionExpiry = await policy.transactionExpiry();
       $util.advanceTime(transactionExpiry.toNumber())
 
@@ -41,9 +62,14 @@ contract("InkProtocol", (accounts) => {
     })
 
     it("fails for policy", async () => {
-      let { protocol, transaction, policy } = await $util.buildTransaction(
-        buyer, seller, { finalState: $util.states.Accepted }
-      )
+      let {
+        protocol,
+        transaction,
+        policy
+      } = await $util.buildTransaction(buyer, seller, {
+        finalState: $util.states.Accepted
+      })
+
       let transactionExpiry = await policy.transactionExpiry();
       $util.advanceTime(transactionExpiry.toNumber())
 
@@ -51,9 +77,14 @@ contract("InkProtocol", (accounts) => {
     })
 
     it("fails for unknown address", async () => {
-      let { protocol, transaction, policy } = await $util.buildTransaction(
-        buyer, seller, { finalState: $util.states.Accepted }
-      )
+      let {
+        protocol,
+        transaction,
+        policy
+      } = await $util.buildTransaction(buyer, seller, {
+        finalState: $util.states.Accepted
+      })
+
       let transactionExpiry = await policy.transactionExpiry();
       $util.advanceTime(transactionExpiry.toNumber())
 
@@ -61,54 +92,75 @@ contract("InkProtocol", (accounts) => {
     })
 
     it("fails when transaction does not exist", async () => {
-      let { protocol, transaction, policy } = await $util.buildTransaction(
-        buyer, seller, { finalState: $util.states.Accepted }
-      )
+      let {
+        protocol,
+        transaction,
+        policy
+      } = await $util.buildTransaction(buyer, seller, {
+        finalState: $util.states.Accepted
+      })
+
       let transactionExpiry = await policy.transactionExpiry();
       $util.advanceTime(transactionExpiry.toNumber())
 
       await $util.assertVMExceptionAsync(protocol.confirmTransactionAfterExpiry(transaction.id + 1, { from: seller }))
     })
 
-    it("fails before transaction expiry", async () => {
-      let { protocol, transaction, policy } = await $util.buildTransaction(
-        buyer, seller, { finalState: $util.states.Accepted }
-      )
+    xit("fails before transaction expiry", async () => {
+      let {
+        protocol,
+        transaction,
+        policy
+      } = await $util.buildTransaction(buyer, seller, {
+        finalState: $util.states.Accepted
+      })
+
       let transactionExpiry = await policy.transactionExpiry();
-      // 10 mins before expiry
+      // Advance time to 1 second before expiry.
       $util.advanceTime(transactionExpiry.toNumber() - 600)
 
       await $util.assertVMExceptionAsync(protocol.confirmTransactionAfterExpiry(transaction.id, { from: seller }))
     })
 
     it("calls the policy for the transaction expiry", async () => {
-      let { protocol, transaction, mediator, policy } = await $util.buildTransaction(
-        buyer, seller, { finalState: $util.states.Accepted }
-      )
+      let {
+        protocol,
+        transaction,
+        policy
+      } = await $util.buildTransaction(buyer, seller, {
+        finalState: $util.states.Accepted
+      })
 
-      // 7 days for transactionExpiry
-      $util.advanceTime(86400 * 8)
+      // 7 days for transactionExpiry.
+      $util.advanceTime(7 * 86400)
 
-      let tx = await protocol.confirmTransactionAfterExpiry(transaction.id, { from: seller })
+      await protocol.confirmTransactionAfterExpiry(transaction.id, { from: seller })
     })
 
     it("sets transaction expiry to 0 when policy raises an error", async () => {
-      let policy = await ErroredPolicy.new()
-      let { protocol, transaction, mediator } = await $util.buildTransaction(
-        buyer, seller, { finalState: $util.states.Accepted, policy: policy }
-      )
+      let {
+        protocol,
+        transaction,
+        mediator
+      } = await $util.buildTransaction(buyer, seller, {
+        finalState: $util.states.Accepted,
+        policy: await ErrorPolicy.new()
+      })
 
-      // This passes without and time advance since the expiry is 0
-      let tx = await protocol.confirmTransactionAfterExpiry(transaction.id, { from: seller })
-
-      transaction = await $util.getTransaction(transaction.id, protocol)
-      assert.equal(transaction.state, $util.states.ConfirmedAfterExpiry)
+      // This passes without the need time advancing since the expiry is 0.
+      await protocol.confirmTransactionAfterExpiry(transaction.id, { from: seller })
     })
 
     it("passes the transaction's amount to the mediator", async () => {
-      let { protocol, transaction, mediator, policy } = await $util.buildTransaction(
-        buyer, seller, { finalState: $util.states.Accepted }
-      )
+      let {
+        protocol,
+        transaction,
+        mediator,
+        policy
+      } = await $util.buildTransaction(buyer, seller, {
+        finalState: $util.states.Accepted
+      })
+
       let transactionExpiry = await policy.transactionExpiry();
       $util.advanceTime(transactionExpiry.toNumber())
 
@@ -148,45 +200,69 @@ contract("InkProtocol", (accounts) => {
     })
 
     it("transfers the tokens to the seller", async () => {
-      let { protocol, transaction, mediator, policy } = await $util.buildTransaction(
-        buyer, seller, { finalState: $util.states.Accepted }
-      )
+      let {
+        protocol,
+        transaction,
+        mediator,
+        policy
+      } = await $util.buildTransaction(buyer, seller, {
+        finalState: $util.states.Accepted
+      })
+
       let transactionExpiry = await policy.transactionExpiry();
       $util.advanceTime(transactionExpiry.toNumber())
+
       let mediatorFee = 10
       await mediator.setConfirmTransactionAfterExpiryFeeResponse(mediatorFee)
 
       let tx = await protocol.confirmTransactionAfterExpiry(transaction.id, { from: seller })
 
+      assert.equal(await $util.getBalance(protocol.address, protocol), 0)
       assert.equal(await $util.getBalance(seller, protocol), transaction.amount - mediatorFee)
     })
 
     it("collects 0 fee when mediator raises an error", async () => {
-      let { protocol, transaction, mediator, policy } = await $util.buildTransaction(
-        buyer, seller, { finalState: $util.states.Accepted }
-      )
+      let {
+        protocol,
+        transaction,
+        mediator,
+        policy
+      } = await $util.buildTransaction(buyer, seller, {
+        finalState: $util.states.Accepted
+      })
+
       let transactionExpiry = await policy.transactionExpiry();
       $util.advanceTime(transactionExpiry.toNumber())
 
       await mediator.setRaiseError(true)
 
       let tx = await protocol.confirmTransactionAfterExpiry(transaction.id, { from: seller })
+      assert.equal(await $util.getBalance(mediator.address, protocol), 0)
       assert.equal(await $util.getBalance(seller, protocol), transaction.amount)
 
-      eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmedAfterExpiry).args
+      let eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmedAfterExpiry).args
       assert.equal(eventArgs.mediatorFee, 0)
     })
 
     it("collects 0 fee when mediator returns a fee higher than the transaction amount", async () => {
-      let { protocol, transaction, mediator, policy } = await $util.buildTransaction(
-        buyer, seller, { finalState: $util.states.Accepted }
-      )
-      let transactionExpiry = await policy.transactionExpiry();
-      $util.advanceTime(transactionExpiry.toNumber())
+      let {
+        protocol,
+        transaction,
+        mediator,
+        policy
+      } = await $util.buildTransaction(buyer, seller, {
+        finalState: $util.states.Accepted
+      })
+
+      // Set the transaction fee higher than the transaction amount.
       let mediatorFee = transaction.amount + 1
       await mediator.setConfirmTransactionAfterExpiryFeeResponse(mediatorFee)
 
+      let transactionExpiry = await policy.transactionExpiry();
+      $util.advanceTime(transactionExpiry.toNumber())
+
       let tx = await protocol.confirmTransactionAfterExpiry(transaction.id, { from: seller })
+      assert.equal(await $util.getBalance(mediator.address, protocol), 0)
       assert.equal(await $util.getBalance(seller, protocol), transaction.amount)
 
       eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmedAfterExpiry).args
