@@ -59,8 +59,8 @@ contract("InkProtocol", (accounts) => {
       let xfer = await protocol.transfer(buyer, amount * 2)
       let tx0 = await protocol.createTransaction(seller, amount, metadata, policy.address, mediator.address, 0, { from: buyer })
       let tx1 = await protocol.createTransaction(seller, amount, metadata, policy.address, mediator.address, 0, { from: buyer })
-      eventArgs0 = $util.eventFromTx(tx0, $util.events.TransactionInitiated).args
-      eventArgs1 = $util.eventFromTx(tx1, $util.events.TransactionInitiated).args
+      let eventArgs0 = $util.eventFromTx(tx0, $util.events.TransactionInitiated).args
+      let eventArgs1 = $util.eventFromTx(tx1, $util.events.TransactionInitiated).args
       assert.equal(eventArgs0.id.toNumber(), 0)
       assert.equal(eventArgs1.id.toNumber(), 1)
     })
@@ -68,7 +68,7 @@ contract("InkProtocol", (accounts) => {
     it("emits the TransactionInitiated event", async () => {
       let xfer = await protocol.transfer(buyer, amount)
       let tx = await protocol.createTransaction(seller, amount, metadata, policy.address, mediator.address, 0, { from: buyer })
-      eventArgs = $util.eventFromTx(tx, $util.events.TransactionInitiated).args
+      let eventArgs = $util.eventFromTx(tx, $util.events.TransactionInitiated).args
       assert.equal(eventArgs.id.toNumber(), 0)
       assert.equal(eventArgs.owner, 0)
       assert.equal(eventArgs.buyer, buyer)
@@ -86,9 +86,6 @@ contract("InkProtocol", (accounts) => {
       let tx = await protocol.createTransaction(seller, amount, metadata, policy.address, mediator.address, 0, { from: buyer })
 
       eventArgs = $util.eventFromTx(tx, $util.events.TransactionInitiated).args
-      assert.equal(eventArgs.buyer, buyer)
-      assert.equal(eventArgs.seller, seller)
-
       assert.equal(await $util.getBalance(protocol.address, protocol), amount)
     })
 
