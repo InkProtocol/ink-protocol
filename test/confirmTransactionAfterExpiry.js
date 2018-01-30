@@ -174,10 +174,12 @@ contract("InkProtocol", (accounts) => {
       let { protocol, transaction, mediator, policy } = await $util.buildTransaction(
         buyer, seller, { finalState: $util.states.Accepted }
       )
-      let transactionExpiry = await policy.transactionExpiry();
-      $util.advanceTime(transactionExpiry.toNumber())
+
       let mediatorFee = 10
       await mediator.setConfirmTransactionAfterExpiryFeeResponse(mediatorFee)
+
+      let transactionExpiry = await policy.transactionExpiry();
+      $util.advanceTime(transactionExpiry.toNumber())
 
       let tx = await protocol.confirmTransactionAfterExpiry(transaction.id, { from: seller })
       assert.equal(await $util.getBalance(mediator.address, protocol), mediatorFee)
@@ -187,10 +189,12 @@ contract("InkProtocol", (accounts) => {
       let { protocol, transaction, mediator, policy } = await $util.buildTransaction(
         buyer, seller, { finalState: $util.states.Accepted }
       )
-      let transactionExpiry = await policy.transactionExpiry();
-      $util.advanceTime(transactionExpiry.toNumber())
+
       let mediatorFee = 10
       await mediator.setConfirmTransactionAfterExpiryFeeResponse(mediatorFee)
+
+      let transactionExpiry = await policy.transactionExpiry();
+      $util.advanceTime(transactionExpiry.toNumber())
 
       let tx = await protocol.confirmTransactionAfterExpiry(transaction.id, { from: seller })
 
@@ -209,11 +213,11 @@ contract("InkProtocol", (accounts) => {
         finalState: $util.states.Accepted
       })
 
-      let transactionExpiry = await policy.transactionExpiry();
-      $util.advanceTime(transactionExpiry.toNumber())
-
       let mediatorFee = 10
       await mediator.setConfirmTransactionAfterExpiryFeeResponse(mediatorFee)
+
+      let transactionExpiry = await policy.transactionExpiry();
+      $util.advanceTime(transactionExpiry.toNumber())
 
       let tx = await protocol.confirmTransactionAfterExpiry(transaction.id, { from: seller })
 
