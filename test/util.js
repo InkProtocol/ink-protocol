@@ -366,6 +366,7 @@ module.exports = {
   states: InkStates,
   eventFromTx: eventFromTx,
   eventsFromTx: eventsFromTx,
+  filterGetSync: filterGetSync,
   getTransactionIdFromTx: getTransactionIdFromTx,
   getTransaction: getTransaction,
   getBalance: getBalance,
