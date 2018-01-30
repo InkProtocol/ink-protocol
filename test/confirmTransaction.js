@@ -2,6 +2,10 @@ const $util = require("./util")
 const InkProtocol = artifacts.require("./mocks/InkProtocolMock.sol")
 
 contract("InkProtocol", (accounts) => {
+  let buyer
+  let seller
+  let unknown
+
   beforeEach(async () => {
     buyer = accounts[1]
     seller = accounts[2]
@@ -10,7 +14,10 @@ contract("InkProtocol", (accounts) => {
 
   describe("#confirmTransaction()", () => {
     it("fails for seller", async () => {
-      let { protocol, transaction } = await $util.buildTransaction(
+      let {
+        protocol,
+        transaction
+      } = await $util.buildTransaction(
         buyer, seller, { finalState: $util.states.Accepted }
       )
 
@@ -18,7 +25,11 @@ contract("InkProtocol", (accounts) => {
     })
 
     it("fails for owner", async () => {
-      let { protocol, transaction, owner } = await $util.buildTransaction(
+      let {
+        protocol,
+        transaction,
+        owner
+      } = await $util.buildTransaction(
         buyer, seller, { finalState: $util.states.Accepted, owner: true }
       )
 
@@ -26,7 +37,11 @@ contract("InkProtocol", (accounts) => {
     })
 
     it("fails for mediator", async () => {
-      let { protocol, transaction, mediator } = await $util.buildTransaction(
+      let {
+        protocol,
+        transaction,
+        mediator
+      } = await $util.buildTransaction(
         buyer, seller, { finalState: $util.states.Accepted }
       )
 
@@ -42,7 +57,10 @@ contract("InkProtocol", (accounts) => {
     })
 
     it("fails for unknown address", async () => {
-      let { protocol, transaction } = await $util.buildTransaction(
+      let {
+        protocol,
+        transaction
+      } = await $util.buildTransaction(
         buyer, seller, { finalState: $util.states.Accepted }
       )
 
@@ -50,7 +68,10 @@ contract("InkProtocol", (accounts) => {
     })
 
     it("fails when transaction does not exist", async () => {
-      let { protocol, transaction } = await $util.buildTransaction(
+      let {
+        protocol,
+        transaction
+      } = await $util.buildTransaction(
         buyer, seller, { finalState: $util.states.Accepted }
       )
 
@@ -59,7 +80,11 @@ contract("InkProtocol", (accounts) => {
 
     describe("when state is Accepted", () => {
       it("passes the transaction's amount to the mediator", async () => {
-        let { protocol, transaction, mediator } = await $util.buildTransaction(
+        let {
+          protocol,
+          transaction,
+          mediator
+        } = await $util.buildTransaction(
           buyer, seller, { finalState: $util.states.Accepted }
         )
 
@@ -69,7 +94,11 @@ contract("InkProtocol", (accounts) => {
       })
 
       it("transfers the mediator fee to the mediator", async () => {
-        let { protocol, transaction, mediator } = await $util.buildTransaction(
+        let {
+          protocol,
+          transaction,
+          mediator
+        } = await $util.buildTransaction(
           buyer, seller, { finalState: $util.states.Accepted }
         )
         let mediatorFee = 10
@@ -81,7 +110,11 @@ contract("InkProtocol", (accounts) => {
       })
 
       it("emits the TransactionConfirmed event", async () => {
-        let { protocol, transaction, mediator } = await $util.buildTransaction(
+        let {
+          protocol,
+          transaction,
+          mediator
+        } = await $util.buildTransaction(
           buyer, seller, { finalState: $util.states.Accepted }
         )
         let mediatorFee = 10
@@ -89,13 +122,17 @@ contract("InkProtocol", (accounts) => {
 
         let tx = await protocol.confirmTransaction(transaction.id, { from: buyer })
 
-        eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmed).args
+        let eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmed).args
         assert.equal(eventArgs.id.toNumber(), transaction.id)
         assert.equal(eventArgs.mediatorFee, mediatorFee)
       })
 
       it("transfers the tokens to the seller", async () => {
-        let { protocol, transaction, mediator } = await $util.buildTransaction(
+        let {
+          protocol,
+          transaction,
+          mediator
+        } = await $util.buildTransaction(
           buyer, seller, { finalState: $util.states.Accepted }
         )
         let mediatorFee = 10
@@ -106,7 +143,11 @@ contract("InkProtocol", (accounts) => {
       })
 
       it("collects 0 fee when mediator raises an error", async () => {
-        let { protocol, transaction, mediator } = await $util.buildTransaction(
+        let {
+          protocol,
+          transaction,
+          mediator
+        } = await $util.buildTransaction(
           buyer, seller, { finalState: $util.states.Accepted }
         )
         await mediator.setRaiseError(true)
@@ -114,12 +155,16 @@ contract("InkProtocol", (accounts) => {
         let tx = await protocol.confirmTransaction(transaction.id, { from: buyer })
         assert.equal(await $util.getBalance(seller, protocol), transaction.amount)
 
-        eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmed).args
+        let eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmed).args
         assert.equal(eventArgs.mediatorFee, 0)
       })
 
       it("collects 0 fee when mediator returns a fee higher than the transaction amount", async () => {
-        let { protocol, transaction, mediator } = await $util.buildTransaction(
+        let {
+          protocol,
+          transaction,
+          mediator
+        } = await $util.buildTransaction(
           buyer, seller, { finalState: $util.states.Accepted }
         )
         let mediatorFee = transaction.amount + 1
@@ -128,14 +173,18 @@ contract("InkProtocol", (accounts) => {
         let tx = await protocol.confirmTransaction(transaction.id, { from: buyer })
         assert.equal(await $util.getBalance(seller, protocol), transaction.amount)
 
-        eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmed).args
+        let eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmed).args
         assert.equal(eventArgs.mediatorFee, 0)
       })
     })
 
     describe("when state is Disputed", () => {
       it("passes the transaction's amount to the mediator", async () => {
-        let { protocol, transaction, mediator } = await $util.buildTransaction(
+        let {
+          protocol,
+          transaction,
+          mediator
+        } = await $util.buildTransaction(
           buyer, seller, { finalState: $util.states.Disputed }
         )
 
@@ -146,7 +195,11 @@ contract("InkProtocol", (accounts) => {
       })
 
       it("transfers the mediator fee to the mediator", async () => {
-        let { protocol, transaction, mediator } = await $util.buildTransaction(
+        let {
+          protocol,
+          transaction,
+          mediator
+        } = await $util.buildTransaction(
           buyer, seller, { finalState: $util.states.Disputed }
         )
         let mediatorFee = 10
@@ -157,7 +210,11 @@ contract("InkProtocol", (accounts) => {
       })
 
       it("emits the TransactionConfirmedAfterDispute event", async () => {
-        let { protocol, transaction, mediator } = await $util.buildTransaction(
+        let {
+          protocol,
+          transaction,
+          mediator
+        } = await $util.buildTransaction(
           buyer, seller, { finalState: $util.states.Disputed }
         )
         let mediatorFee = 10
@@ -165,13 +222,17 @@ contract("InkProtocol", (accounts) => {
 
         let tx = await protocol.confirmTransaction(transaction.id, { from: buyer })
 
-        eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmedAfterDispute).args
+        let eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmedAfterDispute).args
         assert.equal(eventArgs.id.toNumber(), transaction.id)
         assert.equal(eventArgs.mediatorFee.toNumber(), mediatorFee)
       })
 
       it("transfers the tokens to the seller", async () => {
-        let { protocol, transaction, mediator } = await $util.buildTransaction(
+        let {
+          protocol,
+          transaction,
+          mediator
+        } = await $util.buildTransaction(
           buyer, seller, { finalState: $util.states.Disputed }
         )
         let mediatorFee = 10
@@ -182,7 +243,11 @@ contract("InkProtocol", (accounts) => {
       })
 
       it("collects 0 fee when mediator raises an error", async () => {
-        let { protocol, transaction, mediator } = await $util.buildTransaction(
+        let {
+          protocol,
+          transaction,
+          mediator
+        } = await $util.buildTransaction(
           buyer, seller, { finalState: $util.states.Disputed }
         )
         await mediator.setRaiseError(true)
@@ -190,12 +255,16 @@ contract("InkProtocol", (accounts) => {
         let tx = await protocol.confirmTransaction(transaction.id, { from: buyer })
         assert.equal(await $util.getBalance(seller, protocol), transaction.amount)
 
-        eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmedAfterDispute).args
+        let eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmedAfterDispute).args
         assert.equal(eventArgs.mediatorFee, 0)
       })
 
       it("collects 0 fee when mediator returns a fee higher than the transaction amount", async () => {
-        let { protocol, transaction, mediator } = await $util.buildTransaction(
+        let {
+          protocol,
+          transaction,
+          mediator
+        } = await $util.buildTransaction(
           buyer, seller, { finalState: $util.states.Disputed }
         )
         let mediatorFee = transaction.amount + 1
@@ -204,14 +273,18 @@ contract("InkProtocol", (accounts) => {
         let tx = await protocol.confirmTransaction(transaction.id, { from: buyer })
         assert.equal(await $util.getBalance(seller, protocol), transaction.amount)
 
-        eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmedAfterDispute).args
+        let eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmedAfterDispute).args
         assert.equal(eventArgs.mediatorFee, 0)
       })
     })
 
     describe("when state is Escalated", () => {
       it("fails before mediation expiry", async () => {
-        let { protocol, transaction, mediator } = await $util.buildTransaction(
+        let {
+          protocol,
+          transaction,
+          mediator
+        } = await $util.buildTransaction(
           buyer, seller, { finalState: $util.states.Escalated }
         )
         // Set expiry to an hour
@@ -221,7 +294,11 @@ contract("InkProtocol", (accounts) => {
       })
 
       it("calls the mediator for the mediation expiry", async () => {
-        let { protocol, transaction, mediator } = await $util.buildTransaction(
+        let {
+          protocol,
+          transaction,
+          mediator
+        } = await $util.buildTransaction(
           buyer, seller, { finalState: $util.states.Escalated }
         )
 
@@ -233,7 +310,11 @@ contract("InkProtocol", (accounts) => {
       })
 
       it("emits the TransactionConfirmedAfterEscalation event", async () => {
-        let { protocol, transaction, mediator } = await $util.buildTransaction(
+        let {
+          protocol,
+          transaction,
+          mediator
+        } = await $util.buildTransaction(
           buyer, seller, { finalState: $util.states.Escalated }
         )
         mediator.setMediationExpiryResponse(60)
@@ -241,13 +322,17 @@ contract("InkProtocol", (accounts) => {
 
         let tx = await protocol.confirmTransaction(transaction.id, { from: buyer })
 
-        eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmedAfterEscalation).args
+        let eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmedAfterEscalation).args
         assert.equal(eventArgs.id.toNumber(), transaction.id)
         assert.equal(eventArgs.mediatorFee.toNumber(), 0)
       })
 
       it("transfers the tokens to the seller", async () => {
-        let { protocol, transaction, mediator } = await $util.buildTransaction(
+        let {
+          protocol,
+          transaction,
+          mediator
+        } = await $util.buildTransaction(
           buyer, seller, { finalState: $util.states.Escalated }
         )
         mediator.setMediationExpiryResponse(60)
