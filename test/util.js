@@ -383,6 +383,7 @@ module.exports = {
   eventsFromTx: eventsFromTx,
   eventsFromContract: eventsFromContract,
   eventFromContract: eventFromContract,
+  filterGetSync: filterGetSync,
   getTransactionIdFromTx: getTransactionIdFromTx,
   getTransaction: getTransaction,
   getBalance: getBalance,

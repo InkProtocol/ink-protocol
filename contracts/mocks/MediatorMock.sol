@@ -66,6 +66,10 @@ contract MediatorMock is InkMediator {
     return mediationExpiryResponse;
   }
 
+  function getMediationExpiry() external view returns (uint32) {
+    return mediationExpiryResponse;
+  }
+
   function setRequestMediatorResponse(bool _response) external {
     requestMediatorResponse = _response;
   }
