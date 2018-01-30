@@ -106,7 +106,7 @@ contract("InkProtocol", (accounts) => {
       await $util.assertVMExceptionAsync(protocol.confirmTransactionAfterExpiry(transaction.id + 1, { from: seller }))
     })
 
-    xit("fails before transaction expiry", async () => {
+    it("fails before transaction expiry", async () => {
       let {
         protocol,
         transaction,
@@ -116,8 +116,10 @@ contract("InkProtocol", (accounts) => {
       })
 
       let transactionExpiry = await policy.transactionExpiry();
-      // Advance time to 1 second before expiry.
-      $util.advanceTime(transactionExpiry.toNumber() - 600)
+      // Advance time to 10 seconds before expiry. Any closer and risk inconsistent test
+      // results. Advancing time does not freeze time so "now" in the VM can be different
+      // at each test run.
+      $util.advanceTime(transactionExpiry.toNumber() - 10)
 
       await $util.assertVMExceptionAsync(protocol.confirmTransactionAfterExpiry(transaction.id, { from: seller }))
     })
@@ -131,8 +133,8 @@ contract("InkProtocol", (accounts) => {
         finalState: $util.states.Accepted
       })
 
-      // 7 days for transactionExpiry.
-      $util.advanceTime(7 * 86400)
+      // 8 days for transactionExpiry.
+      $util.advanceTime(8 * 86400)
 
       await protocol.confirmTransactionAfterExpiry(transaction.id, { from: seller })
     })
