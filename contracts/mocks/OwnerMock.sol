@@ -1,19 +1,31 @@
 pragma solidity ^0.4.11;
 
-import '../InkPolicy.sol';
+import '../InkOwner.sol';
 import '../InkProtocol.sol';
 
-contract PolicyMock is InkPolicy {
-  function transactionExpiry() external pure returns (uint32) {
-    return 8 days;
+contract OwnerMock is InkOwner {
+  bool authorizeTransactionResponse;
+
+  // Events emitted when callbacks are called.
+  event AuthorizeTransactionCalled(
+    uint256 transactionId,
+    address buyer
+  );
+
+  function OwnerMock() public {
+    authorizeTransactionResponse = true;
   }
 
-  function fulfillmentExpiry() external pure returns (uint32) {
-    return 7 days;
+  function setAuthorizeTransactionResponse(bool _response) external {
+    authorizeTransactionResponse = _response;
   }
 
-  function escalationExpiry() external pure returns (uint32) {
-    return 6 days;
+  function authorizeTransaction(uint256 _id, address _buyer) external returns (bool) {
+    AuthorizeTransactionCalled({
+      transactionId: _id,
+      buyer: _buyer
+    });
+    return authorizeTransactionResponse;
   }
 
   // Proxy functions

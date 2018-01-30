@@ -3,6 +3,7 @@ const EthereumUtil = require("ethereumjs-util")
 const InkProtocol = artifacts.require("./mocks/InkProtocolMock.sol")
 const Mediator = artifacts.require("./mocks/MediatorMock.sol")
 const Policy = artifacts.require("./mocks/PolicyMock.sol")
+const Owner = artifacts.require("./mocks/OwnerMock.sol")
 
 const InkEvents = {
   TransactionInitiated: "TransactionInitiated",
@@ -82,7 +83,7 @@ function eventsFromTx(tx, eventName) {
 function eventFromTx(tx, eventName) {
   let events = eventsFromTx(tx, eventName)
 
-  assert.equal(events.length, 1, `Multiple '${eventName}' events were found`)
+  assert.equal(events.length, 1, `Expected 1 '${eventName}' event, but found ${events.length}`)
 
   return events[0]
 }
@@ -197,34 +198,60 @@ function metadataToHash(metadata) {
   return EthereumUtil.bufferToHex(EthereumUtil.sha3(JSON.stringify(metadata)))
 }
 
-async function createTransaction(buyer, seller, options = {}) {
-  if (options.state && Object.values(InkStates).indexOf(options.state) < 0) {
-    throw(`Unknown state: ${options.state}`)
+async function buildTransaction(buyer, seller, options = {}) {
+  if (options.state && Object.values(InkStates).indexOf(options.finalState) < 0) {
+    throw(`Unknown final state: ${options.finalState}`)
   }
 
   let protocol = options.protocol || await InkProtocol.new()
-  let policy = options.policy || await Policy.new()
-  let mediator = options.mediator || await Mediator.new()
+
+  let policy, policyAddress = 0
+  let mediator, mediatorAddress = 0
+  if (options.mediator) {
+    mediator = options.mediator
+    mediatorAddress = mediator.address
+  } else if (options.mediator !== false) {
+    mediator = await Mediator.new()
+    mediatorAddress = mediator.address
+  }
+
+  if (mediator) {
+    if (options.policy) {
+      policy = options.policy
+    } else {
+      policy = await Policy.new()
+    }
+    policyAddress = policy.address
+  }
+
   let amount = options.amount || 100
   let metadata = metadataToHash(options.metadata || { title: "Title" })
-  let createTx
+  let owner, ownerAddress = 0
+
+  if (options.owner === true) {
+    owner = await Owner.new()
+    ownerAddress = owner.address
+  } else if (options.owner) {
+    owner = options.owner
+    ownerAddress = owner.address
+  }
 
   await protocol.transfer(buyer, amount)
 
-  createTx = await protocol.createTransaction(
+  let createTx = await protocol.createTransaction(
     seller,
     amount,
     metadata,
-    policy.address,
-    mediator.address,
-    options.owner || 0,
+    policyAddress,
+    mediatorAddress,
+    ownerAddress,
     { from: buyer }
   )
 
   let transactionId = getTransactionIdFromTx(createTx)
 
-  if (options.state) {
-    await moveTransactionToState(protocol, policy, mediator, amount, transactionId, options.state, buyer, seller)
+  if (options.finalState) {
+    await moveTransactionToState(protocol, policy, mediator, amount, transactionId, options.finalState, buyer, seller)
   }
 
   let transaction = await getTransaction(transactionId, protocol)
@@ -233,7 +260,8 @@ async function createTransaction(buyer, seller, options = {}) {
     transaction: transaction,
     protocol: protocol,
     policy: policy,
-    mediator: mediator
+    mediator: mediator,
+    owner: owner
   }
 }
 
@@ -345,7 +373,7 @@ module.exports = {
   metadataToHash: metadataToHash,
   assertVMException: assertVMException,
   assertVMExceptionAsync: assertVMExceptionAsync,
-  createTransaction: createTransaction,
+  buildTransaction: buildTransaction,
   forEachState: forEachState,
   forEachStateExcept: forEachStateExcept
 }
