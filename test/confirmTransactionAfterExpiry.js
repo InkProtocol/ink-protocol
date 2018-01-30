@@ -3,8 +3,6 @@ const InkProtocol = artifacts.require("./mocks/InkProtocolMock.sol")
 const ErroredPolicy = artifacts.require("./mocks/ErrorPolicyMock.sol")
 
 contract("InkProtocol", (accounts) => {
-  let protocol
-
   beforeEach(async () => {
     buyer = accounts[1]
     seller = accounts[2]
