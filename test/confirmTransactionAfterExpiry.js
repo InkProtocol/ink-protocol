@@ -173,7 +173,12 @@ contract("InkProtocol", (accounts) => {
     })
 
     it("transfers the mediator fee to the mediator", async () => {
-      let { protocol, transaction, mediator, policy } = await $util.buildTransaction(
+      let {
+        protocol,
+        transaction,
+        mediator,
+        policy
+      } = await $util.buildTransaction(
         buyer, seller, { finalState: $util.states.Accepted }
       )
 
@@ -188,7 +193,12 @@ contract("InkProtocol", (accounts) => {
     })
 
     it("emits the TransactionConfirmedAfterExpiry event", async () => {
-      let { protocol, transaction, mediator, policy } = await $util.buildTransaction(
+      let {
+        protocol,
+        transaction,
+        mediator,
+        policy
+      } = await $util.buildTransaction(
         buyer, seller, { finalState: $util.states.Accepted }
       )
 
