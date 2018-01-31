@@ -141,9 +141,11 @@ contract("InkProtocol", (accounts) => {
       })
 
       let tx = await protocol.provideTransactionFeedback(transaction.id, rating, comment, { from: buyer })
-      let events = $util.eventsFromTx(tx, $util.events.FeedbackUpdated)
+      let eventArgs = await $util.eventFromTx(tx, $util.events.FeedbackUpdated).args
 
-      assert.equal(events.length, 1)
+      assert.equal(eventArgs.transactionId, transaction.id)
+      assert.equal(eventArgs.rating, rating)
+      assert.equal(eventArgs.comment, comment)
     })
 
     it("allows multiple calls", async () => {
@@ -155,15 +157,19 @@ contract("InkProtocol", (accounts) => {
       })
 
       let tx = await protocol.provideTransactionFeedback(transaction.id, rating, comment, { from: buyer })
-      let events = $util.eventsFromTx(tx, $util.events.FeedbackUpdated)
+      let eventArgs = $util.eventFromTx(tx, $util.events.FeedbackUpdated).args
 
-      assert.equal(events.length, 1)
+      assert.equal(eventArgs.transactionId, transaction.id)
+      assert.equal(eventArgs.rating, rating)
+      assert.equal(eventArgs.comment, comment)
 
       let comment2 = $util.metadataToHash({ comment: "comment2" })
       let tx2 = await protocol.provideTransactionFeedback(transaction.id, rating, comment2, { from: buyer })
-      events = $util.eventsFromTx(tx2, $util.events.FeedbackUpdated)
+      eventArgs = $util.eventFromTx(tx2, $util.events.FeedbackUpdated).args
 
-      assert.equal(events.length, 1)
+      assert.equal(eventArgs.transactionId, transaction.id)
+      assert.equal(eventArgs.rating, rating)
+      assert.equal(eventArgs.comment, comment2)
     })
   })
 })
