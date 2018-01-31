@@ -3,10 +3,17 @@ const InkProtocol = artifacts.require("./mocks/InkProtocolMock.sol")
 const Mediator = artifacts.require("./mocks/MediatorMock.sol")
 
 contract("InkProtocol", (accounts) => {
-  let buyer = accounts[1]
-  let seller = accounts[2]
-  let unknown = accounts[accounts.length - 1]
-  let mediatorFee = 10
+  let buyer,
+      seller,
+      unknown,
+      mediatorFee
+
+  beforeEach(() => {
+    buyer = accounts[1]
+    seller = accounts[2]
+    unknown = accounts[accounts.length - 1]
+    mediatorFee = 10
+  })
 
   describe("#refundTransactionByMediator()", () => {
     it("fails for buyer", async () => {
@@ -84,6 +91,7 @@ contract("InkProtocol", (accounts) => {
       })
 
       await mediator.setRaiseError(true)
+
       await $util.assertVMExceptionAsync(mediator.refundTransaction(protocol.address, transaction.id))
     })
 
@@ -97,6 +105,7 @@ contract("InkProtocol", (accounts) => {
       })
 
       await mediator.setRefundTransactionByMediatorFeeResponse(transaction.amount + 1)
+
       await $util.assertVMExceptionAsync(mediator.refundTransaction(protocol.address, transaction.id))
     })
 
@@ -125,7 +134,6 @@ contract("InkProtocol", (accounts) => {
       })
 
       await mediator.setRefundTransactionByMediatorFeeResponse(mediatorFee)
-
       await mediator.refundTransaction(protocol.address, transaction.id)
 
       assert.equal(await $util.getBalance(protocol.address, protocol), 0)
@@ -142,7 +150,6 @@ contract("InkProtocol", (accounts) => {
       })
 
       await mediator.setRefundTransactionByMediatorFeeResponse(mediatorFee)
-
       await mediator.refundTransaction(protocol.address, transaction.id)
 
       assert.equal(await $util.getBalance(protocol.address, protocol), 0)
