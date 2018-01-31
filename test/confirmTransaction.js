@@ -316,7 +316,7 @@ contract("InkProtocol", (accounts) => {
         } = await $util.buildTransaction(buyer, seller, {
           finalState: $util.states.Escalated
         })
-        mediator.setMediationExpiryResponse(60)
+        await mediator.setMediationExpiryResponse(60)
         $util.advanceTime(60)
 
         await protocol.confirmTransaction(transaction.id, { from: buyer })
@@ -331,7 +331,7 @@ contract("InkProtocol", (accounts) => {
         } = await $util.buildTransaction(buyer, seller, {
           finalState: $util.states.Escalated
         })
-        mediator.setMediationExpiryResponse(60)
+        await mediator.setMediationExpiryResponse(60)
         $util.advanceTime(60)
 
         let tx = await protocol.confirmTransaction(transaction.id, { from: buyer })
@@ -348,7 +348,7 @@ contract("InkProtocol", (accounts) => {
         } = await $util.buildTransaction(buyer, seller, {
           finalState: $util.states.Escalated
         })
-        mediator.setMediationExpiryResponse(60)
+        await mediator.setMediationExpiryResponse(60)
         $util.advanceTime(60)
 
         await protocol.confirmTransaction(transaction.id, { from: buyer })
