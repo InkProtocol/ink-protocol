@@ -14,16 +14,14 @@ contract("InkProtocol", (accounts) => {
     })
 
     it("succeeds when sending token to another address", async () => {
-      let sender = accounts[1]
-      let recipient = accounts[2]
+      let sender = accounts[0]
+      let recipient = accounts[1]
       let amount = 10;
-
-      await protocol.transfer(sender, 20)
-      let senderBalance = await $util.getBalance(sender, protocol)
+      let originalSenderBalance = await $util.getBalance(accounts[0], protocol)
 
       await protocol.transfer(recipient, amount, { from: sender })
 
-      assert.equal(await $util.getBalance(sender, protocol), senderBalance - amount)
+      assert.equal(await $util.getBalance(sender, protocol), originalSenderBalance - amount)
       assert.equal(await $util.getBalance(recipient, protocol), amount)
     })
   })
