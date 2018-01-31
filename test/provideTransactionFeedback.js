@@ -2,12 +2,19 @@ const $util = require("./util")
 const InkProtocol = artifacts.require("./mocks/InkProtocolMock.sol")
 
 contract("InkProtocol", (accounts) => {
-  let buyer = accounts[1]
-  let seller = accounts[2]
-  let unknown = accounts[accounts.length - 1]
-  let amount = 100
-  let rating = 5
-  let comment = $util.metadataToHash({ comment: "comment" })
+  let buyer,
+      seller,
+      unkown,
+      rating,
+      comment
+
+  beforeEach(() => {
+    buyer = accounts[1]
+    seller = accounts[2]
+    unknown = accounts[accounts.length - 1]
+    rating = 5
+    comment = $util.metadataToHash({ comment: "comment" })
+  })
 
   describe("#provideTransactionFeedback()", () => {
     it("fails for seller", async () => {
@@ -73,7 +80,7 @@ contract("InkProtocol", (accounts) => {
     it("fails when transaction does not exist", async () => {
       let protocol = await InkProtocol.new()
 
-      await $util.assertVMExceptionAsync(protocol.provideTransactionFeedback(0, rating, comment))
+      await $util.assertVMExceptionAsync(protocol.provideTransactionFeedback(0, rating, comment, { from: buyer }))
     })
 
     it("fails when transaction state is Revoked", async () => {
@@ -128,8 +135,8 @@ contract("InkProtocol", (accounts) => {
         finalState: $util.states.Confirmed
       })
 
-      let invalidRating = 6
-      await $util.assertVMExceptionAsync(protocol.provideTransactionFeedback(transaction.id, invalidRating, comment, { from: buyer }))
+      await $util.assertVMExceptionAsync(protocol.provideTransactionFeedback(transaction.id, 0, comment, { from: buyer }))
+      await $util.assertVMExceptionAsync(protocol.provideTransactionFeedback(transaction.id, 6, comment, { from: buyer }))
     })
 
     it("emits the FeedbackUpdated event", async () => {
@@ -141,14 +148,19 @@ contract("InkProtocol", (accounts) => {
       })
 
       let tx = await protocol.provideTransactionFeedback(transaction.id, rating, comment, { from: buyer })
-      let eventArgs = await $util.eventFromTx(tx, $util.events.FeedbackUpdated).args
 
+      let eventArgs = await $util.eventFromTx(tx, $util.events.FeedbackUpdated).args
       assert.equal(eventArgs.transactionId, transaction.id)
       assert.equal(eventArgs.rating, rating)
       assert.equal(eventArgs.comment, comment)
     })
 
     it("allows multiple calls", async () => {
+      let rating2 = 2
+      let comment2 = $util.metadataToHash({ comment: "comment2" })
+      let rating3 = 3
+      let comment3 = $util.metadataToHash({ comment: "comment3" })
+
       let {
         protocol,
         transaction
@@ -156,20 +168,19 @@ contract("InkProtocol", (accounts) => {
         finalState: $util.states.Confirmed
       })
 
-      let tx = await protocol.provideTransactionFeedback(transaction.id, rating, comment, { from: buyer })
-      let eventArgs = $util.eventFromTx(tx, $util.events.FeedbackUpdated).args
+      await protocol.provideTransactionFeedback(transaction.id, rating, comment, { from: buyer })
 
-      assert.equal(eventArgs.transactionId, transaction.id)
-      assert.equal(eventArgs.rating, rating)
-      assert.equal(eventArgs.comment, comment)
+      let tx2 = await protocol.provideTransactionFeedback(transaction.id, rating2, comment2, { from: buyer })
+      let eventArgs2 = $util.eventFromTx(tx2, $util.events.FeedbackUpdated).args
+      assert.equal(eventArgs2.transactionId, transaction.id)
+      assert.equal(eventArgs2.rating, rating2)
+      assert.equal(eventArgs2.comment, comment2)
 
-      let comment2 = $util.metadataToHash({ comment: "comment2" })
-      let tx2 = await protocol.provideTransactionFeedback(transaction.id, rating, comment2, { from: buyer })
-      eventArgs = $util.eventFromTx(tx2, $util.events.FeedbackUpdated).args
-
-      assert.equal(eventArgs.transactionId, transaction.id)
-      assert.equal(eventArgs.rating, rating)
-      assert.equal(eventArgs.comment, comment2)
+      let tx3 = await protocol.provideTransactionFeedback(transaction.id, rating3, comment3, { from: buyer })
+      let eventArgs3 = $util.eventFromTx(tx3, $util.events.FeedbackUpdated).args
+      assert.equal(eventArgs3.transactionId, transaction.id)
+      assert.equal(eventArgs3.rating, rating3)
+      assert.equal(eventArgs3.comment, comment3)
     })
   })
 })
