@@ -3,9 +3,9 @@ const InkProtocol = artifacts.require("./mocks/InkProtocolMock.sol")
 const Mediator = artifacts.require("./mocks/MediatorMock.sol")
 
 contract("InkProtocol", (accounts) => {
-  let buyer
-  let seller
-  let unknown
+  let buyer,
+      seller,
+      unknown
 
   beforeEach(async () => {
     buyer = accounts[1]
@@ -89,6 +89,7 @@ contract("InkProtocol", (accounts) => {
       })
 
       await mediator.setRaiseError(true)
+
       await $util.assertVMExceptionAsync(mediator.confirmTransaction(protocol.address, transaction.id))
     })
 
@@ -102,6 +103,7 @@ contract("InkProtocol", (accounts) => {
       })
 
       await mediator.setConfirmTransactionByMediatorFeeResponse(transaction.amount + 1)
+
       await $util.assertVMExceptionAsync(mediator.confirmTransaction(protocol.address, transaction.id))
     })
 
@@ -114,8 +116,6 @@ contract("InkProtocol", (accounts) => {
         finalState: $util.states.Escalated
       })
 
-      let mediatorFee = 10
-      await mediator.setConfirmTransactionByMediatorFeeResponse(mediatorFee)
       await mediator.confirmTransaction(protocol.address, transaction.id)
 
       let event = await $util.eventFromContract(mediator, "ConfirmTransactionByMediatorFeeCalled")
@@ -133,8 +133,8 @@ contract("InkProtocol", (accounts) => {
 
       let mediatorFee = 10
       await mediator.setConfirmTransactionByMediatorFeeResponse(mediatorFee)
-
       await mediator.confirmTransaction(protocol.address, transaction.id)
+
       assert.equal(await $util.getBalance(protocol.address, protocol), 0)
       assert.equal(await $util.getBalance(mediator.address, protocol), mediatorFee)
     })
@@ -150,7 +150,6 @@ contract("InkProtocol", (accounts) => {
 
       let mediatorFee = 10
       await mediator.setConfirmTransactionByMediatorFeeResponse(mediatorFee)
-
       await mediator.confirmTransaction(protocol.address, transaction.id)
 
       assert.equal(await $util.getBalance(protocol.address, protocol), 0)
@@ -168,12 +167,11 @@ contract("InkProtocol", (accounts) => {
 
       let mediatorFee = 10
       await mediator.setConfirmTransactionByMediatorFeeResponse(mediatorFee)
-
       await mediator.confirmTransaction(protocol.address, transaction.id)
 
       let event = await $util.eventFromContract(protocol, $util.events.TransactionConfirmedByMediator)
       assert.equal(event.args.id.toNumber(), transaction.id)
-      assert.equal(event.args.mediatorFee, mediatorFee)
+      assert.equal(event.args.mediatorFee.toNumber(), mediatorFee)
     })
   })
 })
