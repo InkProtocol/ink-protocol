@@ -10,6 +10,10 @@ contract InkProtocol is InkProtocolInterface, StandardToken {
   string public constant name = "Ink Protocol";
   string public constant symbol = "XNK";
   uint8 public constant decimals = 18;
+  uint256 public constant burnedSupply = 0;
+
+  uint256 private constant gasLimitForExpiryCall = 1000000;
+  uint256 private constant gasLimitForMediatorCall = 4000000;
 
   enum Expiry {
     Transaction, // 0
@@ -168,15 +172,13 @@ contract InkProtocol is InkProtocolInterface, StandardToken {
   // Event emitted when a transaction is confirmed by the buyer after the
   // mediation expiry.
   event TransactionConfirmedAfterEscalation(
-    uint256 indexed id,
-    uint256 mediatorFee
+    uint256 indexed id
   );
 
   // Event emitted when a transaction is refunded by the seller after the
   // mediation expiry.
   event TransactionRefundedAfterEscalation(
-    uint256 indexed id,
-    uint256 mediatorFee
+    uint256 indexed id
   );
 
   // Event emitted when a transaction is settled by either the buyer or the
@@ -209,6 +211,9 @@ contract InkProtocol is InkProtocolInterface, StandardToken {
   function InkProtocol() public {
     // A total supply of 500,000,000 Ink Tokens (XNK).
     totalSupply_ = 500000000000000000000000000;
+
+    // Burn unsold tokens.
+    totalSupply_ = totalSupply_.sub(burnedSupply);
 
     // TODO: Add distribution logic here.
   }
@@ -539,7 +544,7 @@ contract InkProtocol is InkProtocolInterface, StandardToken {
     } else if (_finalState == TransactionState.ConfirmedAfterDispute) {
       TransactionConfirmedAfterDispute({ id: _id, mediatorFee: mediatorFee });
     } else if (_finalState == TransactionState.ConfirmedAfterEscalation) {
-      TransactionConfirmedAfterEscalation({ id: _id, mediatorFee: mediatorFee });
+      TransactionConfirmedAfterEscalation({ id: _id });
     } else if (_finalState == TransactionState.ConfirmedAfterExpiry) {
       TransactionConfirmedAfterExpiry({ id: _id, mediatorFee: mediatorFee });
     } else if (_finalState == TransactionState.Refunded) {
@@ -547,7 +552,7 @@ contract InkProtocol is InkProtocolInterface, StandardToken {
     } else if (_finalState == TransactionState.RefundedAfterDispute) {
       TransactionRefundedAfterDispute({ id: _id, mediatorFee: mediatorFee });
     } else if (_finalState == TransactionState.RefundedAfterEscalation) {
-      TransactionRefundedAfterEscalation({ id: _id, mediatorFee: mediatorFee });
+      TransactionRefundedAfterEscalation({ id: _id });
     } else if (_finalState == TransactionState.RefundedAfterExpiry) {
       TransactionRefundedAfterExpiry({ id: _id, mediatorFee: mediatorFee });
     } else if (_finalState == TransactionState.RefundedByMediator) {
@@ -567,22 +572,22 @@ contract InkProtocol is InkProtocolInterface, StandardToken {
     bool success;
 
     if (_expiryType == Expiry.Transaction) {
-      success = _transaction.policy.call(bytes4(keccak256("transactionExpiry()")));
+      success = _transaction.policy.call.gas(gasLimitForExpiryCall)(bytes4(keccak256("transactionExpiry()")));
     } else if (_expiryType == Expiry.Fulfillment) {
-      success = _transaction.policy.call(bytes4(keccak256("fulfillmentExpiry()")));
+      success = _transaction.policy.call.gas(gasLimitForExpiryCall)(bytes4(keccak256("fulfillmentExpiry()")));
     } else if (_expiryType == Expiry.Escalation) {
-      success = _transaction.policy.call(bytes4(keccak256("escalationExpiry()")));
+      success = _transaction.policy.call.gas(gasLimitForExpiryCall)(bytes4(keccak256("escalationExpiry()")));
     } else if (_expiryType == Expiry.Mediation) {
-      success = _transaction.mediator.call(bytes4(keccak256("mediationExpiry()")));
+      success = _transaction.mediator.call.gas(gasLimitForExpiryCall)(bytes4(keccak256("mediationExpiry()")));
     }
 
     if (success) {
       assembly {
         // TODO: Switch to 'if' statement when we're on solc 0.4.19.
-        switch eq(returndatasize(), 0x4)
+        switch eq(returndatasize(), 0x20)
         case 1 {
           let _freeMemPointer := mload(0x40)
-          returndatacopy(_freeMemPointer, 0, 0x4)
+          returndatacopy(_freeMemPointer, 0, 0x20)
           expiry := mload(_freeMemPointer)
         }
       }
@@ -600,19 +605,19 @@ contract InkProtocol is InkProtocolInterface, StandardToken {
     bool success;
 
     if (_finalState == TransactionState.Confirmed) {
-      success = _transaction.mediator.call(bytes4(keccak256("confirmTransactionFee(uint256)")), _transaction.amount);
+      success = _transaction.mediator.call.gas(gasLimitForMediatorCall)(bytes4(keccak256("confirmTransactionFee(uint256)")), _transaction.amount);
     } else if (_finalState == TransactionState.ConfirmedAfterExpiry) {
-      success = _transaction.mediator.call(bytes4(keccak256("confirmTransactionAfterExpiryFee(uint256)")), _transaction.amount);
+      success = _transaction.mediator.call.gas(gasLimitForMediatorCall)(bytes4(keccak256("confirmTransactionAfterExpiryFee(uint256)")), _transaction.amount);
     } else if (_finalState == TransactionState.ConfirmedAfterDispute) {
-      success = _transaction.mediator.call(bytes4(keccak256("confirmTransactionAfterDisputeFee(uint256)")), _transaction.amount);
+      success = _transaction.mediator.call.gas(gasLimitForMediatorCall)(bytes4(keccak256("confirmTransactionAfterDisputeFee(uint256)")), _transaction.amount);
     } else if (_finalState == TransactionState.ConfirmedByMediator) {
       mediatorFee = InkMediator(_transaction.mediator).confirmTransactionByMediatorFee(_transaction.amount);
     } else if (_finalState == TransactionState.Refunded) {
-      success = _transaction.mediator.call(bytes4(keccak256("refundTransactionFee(uint256)")), _transaction.amount);
+      success = _transaction.mediator.call.gas(gasLimitForMediatorCall)(bytes4(keccak256("refundTransactionFee(uint256)")), _transaction.amount);
     } else if (_finalState == TransactionState.RefundedAfterExpiry) {
-      success = _transaction.mediator.call(bytes4(keccak256("refundTransactionAfterExpiryFee(uint256)")), _transaction.amount);
+      success = _transaction.mediator.call.gas(gasLimitForMediatorCall)(bytes4(keccak256("refundTransactionAfterExpiryFee(uint256)")), _transaction.amount);
     } else if (_finalState == TransactionState.RefundedAfterDispute) {
-      success = _transaction.mediator.call(bytes4(keccak256("refundTransactionAfterDisputeFee(uint256)")), _transaction.amount);
+      success = _transaction.mediator.call.gas(gasLimitForMediatorCall)(bytes4(keccak256("refundTransactionAfterDisputeFee(uint256)")), _transaction.amount);
     } else if (_finalState == TransactionState.RefundedByMediator) {
       mediatorFee = InkMediator(_transaction.mediator).refundTransactionByMediatorFee(_transaction.amount);
     }
