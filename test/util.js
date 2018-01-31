@@ -307,14 +307,14 @@ async function moveTransactionToState(protocol, policy, mediator, amount, transa
   }
 
   if (state == InkStates.ConfirmedAfterExpiry) {
-    let transactionExpiry = await policy.transactionExpiry();
-    advanceTime(transactionExpiry.toNumber())
+    await advanceExpiry(policy.transactionExpiry)
+
     await protocol.confirmTransactionAfterExpiry(transactionId, { from: seller })
     return
   }
 
-  let fulfillmentExpiry = await policy.fulfillmentExpiry();
-  advanceTime(fulfillmentExpiry.toNumber())
+  await advanceExpiry(policy.fulfillmentExpiry)
+
   await protocol.disputeTransaction(transactionId, { from: buyer })
 
   if (state == InkStates.Disputed) {
@@ -332,8 +332,8 @@ async function moveTransactionToState(protocol, policy, mediator, amount, transa
   }
 
   if (state == InkStates.RefundedAfterExpiry) {
-    let escalationExpiry = await policy.escalationExpiry();
-    advanceTime(escalationExpiry.toNumber())
+    await advanceExpiry(policy.escalationExpiry)
+
     await protocol.refundTransactionAfterExpiry(transactionId, { from: seller })
     return
   }
@@ -343,6 +343,8 @@ async function moveTransactionToState(protocol, policy, mediator, amount, transa
   if (state == InkStates.Escalated) {
     return
   }
+
+  await advanceExpiry(mediator.mediationExpiry)
 
   if (state == InkStates.ConfirmedAfterEscalation) {
     await protocol.confirmTransaction(transactionId, { from: buyer })
@@ -354,10 +356,7 @@ async function moveTransactionToState(protocol, policy, mediator, amount, transa
     return
   }
 
-  let _, mediationExpiry = await mediator.requestMediator.call(transactionId, amount)
-
   if (state == InkStates.Settled) {
-    advanceTime(mediationExpiry.toNumber())
     await protocol.settleTransaction(transactionId, { from: buyer })
     return
   }
@@ -373,6 +372,20 @@ function mapResponseToTransaction(id, response) {
     state: response[4].toNumber(),
     amount: response[5].toNumber(),
     metadata: response[6]
+  }
+}
+
+async function advanceExpiry(expiryFunction) {
+  let expiry = 0
+
+  try {
+    expiry = (await expiryFunction()).toNumber()
+  } catch(error) {
+    // do nothing
+  }
+
+  if (expiry > 0) {
+    advanceTime(expiry)
   }
 }
 
