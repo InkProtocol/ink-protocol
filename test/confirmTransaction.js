@@ -90,6 +90,7 @@ contract("InkProtocol", (accounts) => {
 
         let tx = await protocol.confirmTransaction(transaction.id, { from: buyer })
         let event = await $util.eventFromContract(mediator, "ConfirmTransactionFeeCalled")
+
         assert.equal(event.args.transactionAmount.toNumber(), transaction.amount)
       })
 
@@ -105,7 +106,6 @@ contract("InkProtocol", (accounts) => {
         await mediator.setConfirmTransactionFeeResponse(mediatorFee)
 
         let tx = await protocol.confirmTransaction(transaction.id, { from: buyer })
-
         assert.equal(await $util.getBalance(mediator.address, protocol), mediatorFee)
       })
 
@@ -139,6 +139,7 @@ contract("InkProtocol", (accounts) => {
         await mediator.setConfirmTransactionFeeResponse(mediatorFee)
 
         let tx = await protocol.confirmTransaction(transaction.id, { from: buyer })
+        assert.equal(await $util.getBalance(protocol.address, protocol), 0)
         assert.equal(await $util.getBalance(seller, protocol), transaction.amount - mediatorFee)
       })
 
@@ -153,6 +154,7 @@ contract("InkProtocol", (accounts) => {
         await mediator.setRaiseError(true)
 
         let tx = await protocol.confirmTransaction(transaction.id, { from: buyer })
+        assert.equal(await $util.getBalance(protocol.address, protocol), 0)
         assert.equal(await $util.getBalance(seller, protocol), transaction.amount)
 
         let eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmed).args
@@ -171,6 +173,7 @@ contract("InkProtocol", (accounts) => {
         await mediator.setConfirmTransactionFeeResponse(mediatorFee)
 
         let tx = await protocol.confirmTransaction(transaction.id, { from: buyer })
+        assert.equal(await $util.getBalance(protocol.address, protocol), 0)
         assert.equal(await $util.getBalance(seller, protocol), transaction.amount)
 
         let eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmed).args
@@ -239,6 +242,7 @@ contract("InkProtocol", (accounts) => {
         await mediator.setConfirmTransactionAfterDisputeFeeResponse(mediatorFee)
 
         let tx = await protocol.confirmTransaction(transaction.id, { from: buyer })
+        assert.equal(await $util.getBalance(protocol.address, protocol), 0)
         assert.equal(await $util.getBalance(seller, protocol), transaction.amount - mediatorFee)
       })
 
@@ -253,6 +257,7 @@ contract("InkProtocol", (accounts) => {
         await mediator.setRaiseError(true)
 
         let tx = await protocol.confirmTransaction(transaction.id, { from: buyer })
+        assert.equal(await $util.getBalance(protocol.address, protocol), 0)
         assert.equal(await $util.getBalance(seller, protocol), transaction.amount)
 
         let eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmedAfterDispute).args
@@ -271,6 +276,7 @@ contract("InkProtocol", (accounts) => {
         await mediator.setConfirmTransactionAfterDisputeFeeResponse(mediatorFee)
 
         let tx = await protocol.confirmTransaction(transaction.id, { from: buyer })
+        assert.equal(await $util.getBalance(protocol.address, protocol), 0)
         assert.equal(await $util.getBalance(seller, protocol), transaction.amount)
 
         let eventArgs = $util.eventFromTx(tx, $util.events.TransactionConfirmedAfterDispute).args
@@ -339,6 +345,7 @@ contract("InkProtocol", (accounts) => {
         $util.advanceTime(60)
 
         let tx = await protocol.confirmTransaction(transaction.id, { from: buyer })
+        assert.equal(await $util.getBalance(protocol.address, protocol), 0)
         assert.equal(await $util.getBalance(seller, protocol), transaction.amount)
       })
     })
