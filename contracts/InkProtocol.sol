@@ -544,7 +544,7 @@ contract InkProtocol is InkProtocolInterface, StandardToken {
     } else if (_finalState == TransactionState.ConfirmedAfterDispute) {
       TransactionConfirmedAfterDispute({ id: _id, mediatorFee: mediatorFee });
     } else if (_finalState == TransactionState.ConfirmedAfterEscalation) {
-      TransactionConfirmedAfterEscalation({ id: _id, mediatorFee: mediatorFee });
+      TransactionConfirmedAfterEscalation({ id: _id });
     } else if (_finalState == TransactionState.ConfirmedAfterExpiry) {
       TransactionConfirmedAfterExpiry({ id: _id, mediatorFee: mediatorFee });
     } else if (_finalState == TransactionState.Refunded) {
@@ -552,7 +552,7 @@ contract InkProtocol is InkProtocolInterface, StandardToken {
     } else if (_finalState == TransactionState.RefundedAfterDispute) {
       TransactionRefundedAfterDispute({ id: _id, mediatorFee: mediatorFee });
     } else if (_finalState == TransactionState.RefundedAfterEscalation) {
-      TransactionRefundedAfterEscalation({ id: _id, mediatorFee: mediatorFee });
+      TransactionRefundedAfterEscalation({ id: _id });
     } else if (_finalState == TransactionState.RefundedAfterExpiry) {
       TransactionRefundedAfterExpiry({ id: _id, mediatorFee: mediatorFee });
     } else if (_finalState == TransactionState.RefundedByMediator) {
