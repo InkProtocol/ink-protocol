@@ -71,7 +71,7 @@ contract MediatorMock is InkMediator {
     mediationExpiryResponse = _response;
   }
 
-  function mediationExpiry() external raisesError returns(uint32) {
+  function mediationExpiry() external raisesError returns (uint32) {
     MediationExpiryCalled();
     return mediationExpiryResponse;
   }
