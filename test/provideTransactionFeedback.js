@@ -2,17 +2,12 @@ const $util = require("./util")
 const InkProtocol = artifacts.require("./mocks/InkProtocolMock.sol")
 
 contract("InkProtocol", (accounts) => {
-  let protocol
   let buyer = accounts[1]
   let seller = accounts[2]
   let unknown = accounts[accounts.length - 1]
   let amount = 100
   let rating = 5
   let comment = $util.metadataToHash({ comment: "comment" })
-
-  beforeEach(async () => {
-    protocol = await InkProtocol.new()
-  })
 
   describe("#provideTransactionFeedback()", () => {
     it("fails for seller", async () => {
@@ -76,6 +71,8 @@ contract("InkProtocol", (accounts) => {
     })
 
     it("fails when transaction does not exist", async () => {
+      let protocol = await InkProtocol.new()
+
       await $util.assertVMExceptionAsync(protocol.provideTransactionFeedback(0, rating, comment))
     })
 
@@ -144,9 +141,9 @@ contract("InkProtocol", (accounts) => {
       })
 
       let tx = await protocol.provideTransactionFeedback(transaction.id, rating, comment, { from: buyer })
-      let eventArgs = $util.eventFromTx(tx, $util.events.FeedbackUpdated).args
+      let events = $util.eventsFromTx(tx, $util.events.FeedbackUpdated)
 
-      assert.equal(eventArgs.transactionId, transaction.id)
+      assert.equal(events.length, 1)
     })
 
     it("allows multiple calls", async () => {
@@ -158,15 +155,15 @@ contract("InkProtocol", (accounts) => {
       })
 
       let tx = await protocol.provideTransactionFeedback(transaction.id, rating, comment, { from: buyer })
-      let eventArgs = $util.eventFromTx(tx, $util.events.FeedbackUpdated).args
+      let events = $util.eventsFromTx(tx, $util.events.FeedbackUpdated)
 
-      assert.equal(eventArgs.transactionId, transaction.id)
+      assert.equal(events.length, 1)
 
       let comment2 = $util.metadataToHash({ comment: "comment2" })
       let tx2 = await protocol.provideTransactionFeedback(transaction.id, rating, comment2, { from: buyer })
-      eventArgs = $util.eventFromTx(tx2, $util.events.FeedbackUpdated).args
+      events = $util.eventsFromTx(tx2, $util.events.FeedbackUpdated)
 
-      assert.equal(eventArgs.transactionId, transaction.id)
+      assert.equal(events.length, 1)
     })
   })
 })
