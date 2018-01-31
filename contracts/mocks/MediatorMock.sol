@@ -104,6 +104,10 @@ contract MediatorMock is InkMediator {
     return confirmTransactionAfterDisputeFeeResponse;
   }
 
+  function setConfirmTransactionByMediatorFeeResponse(uint256 _response) external {
+    confirmTransactionByMediatorFeeResponse = _response;
+  }
+
   function confirmTransactionByMediatorFee(uint256 _transactionAmount) external raisesError returns (uint256) {
     ConfirmTransactionByMediatorFeeCalled(_transactionAmount);
     return confirmTransactionByMediatorFeeResponse;
