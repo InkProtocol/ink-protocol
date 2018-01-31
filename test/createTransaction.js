@@ -92,7 +92,6 @@ contract("InkProtocol", (accounts) => {
     describe("when mediator is specified", () => {
       it("fails when policy is not specified", async () => {
         let policyAddress = 0;
-
         await protocol.transfer(buyer, amount)
 
         await $util.assertVMExceptionAsync(protocol.createTransaction(seller, amount, metadata, policyAddress, mediator.address, 0, { from: buyer }))
@@ -108,7 +107,7 @@ contract("InkProtocol", (accounts) => {
       it("passes the transaction's id, amount, and owner to the mediator", async () => {
         let xfer = await protocol.transfer(buyer, amount)
         let tx = await protocol.createTransaction(seller, amount, metadata, policy.address, mediator.address, 0, { from: buyer })
-        let events = await $util.filterGetSync(mediator.RequestMediatorCalled({ id: 0, amount: amount, owner: 0}, { fromBlock: 0 }))
+        let events = await $util.eventsFromContract(mediator, "RequestMediatorCalled", { id: 0, amount: amount, owner: 0 })
 
         assert.equal(events.length, 1)
       })
@@ -127,7 +126,7 @@ contract("InkProtocol", (accounts) => {
       it("passes the transaction's id and buyer to the owner", async () => {
         let xfer = await protocol.transfer(buyer, amount)
         let tx = await protocol.createTransaction(seller, amount, metadata, policy.address, mediator.address, owner.address, { from: buyer })
-        let events = await $util.filterGetSync(owner.AuthorizeTransactionCalled({ id: 0, buyer: 0}, { fromBlock: 0 }))
+        let events = await $util.eventsFromContract(owner, "AuthorizeTransactionCalled", { id: 0, buyer: 0 })
 
         assert.equal(events.length, 1)
       })

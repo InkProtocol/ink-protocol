@@ -31,15 +31,15 @@ contract MediatorMock is InkMediator {
     uint256 transactionAmount,
     address transactionOwner
   );
-  event ConfirmTransactionFeeCalled(uint256 transactionAmount);
-  event ConfirmTransactionAfterExpiryFeeCalled(uint256 transactionAmount);
-  event ConfirmTransactionAfterDisputeFeeCalled(uint256 transactionAmount);
-  event ConfirmTransactionByMediatorFeeCalled(uint256 transactionAmount);
-  event RefundTransactionFeeCalled(uint256 transactionAmount);
-  event RefundTransactionAfterExpiryFeeCalled(uint256 transactionAmount);
-  event RefundTransactionAfterDisputeFeeCalled(uint256 transactionAmount);
-  event RefundTransactionByMediatorFeeCalled(uint256 transactionAmount);
-  event SettleTransactionByMediatorFeeCalled(uint256 buyerAmount, uint256 sellerAmount);
+  event ConfirmTransactionFeeCalled(uint256 transactionAmount, uint256 gasRemaining);
+  event ConfirmTransactionAfterExpiryFeeCalled(uint256 transactionAmount, uint256 gasRemaining);
+  event ConfirmTransactionAfterDisputeFeeCalled(uint256 transactionAmount, uint256 gasRemaining);
+  event ConfirmTransactionByMediatorFeeCalled(uint256 transactionAmount, uint256 gasRemaining);
+  event RefundTransactionFeeCalled(uint256 transactionAmount, uint256 gasRemaining);
+  event RefundTransactionAfterExpiryFeeCalled(uint256 transactionAmount, uint256 gasRemaining);
+  event RefundTransactionAfterDisputeFeeCalled(uint256 transactionAmount, uint256 gasRemaining);
+  event RefundTransactionByMediatorFeeCalled(uint256 transactionAmount, uint256 gasRemaining);
+  event SettleTransactionByMediatorFeeCalled(uint256 buyerAmount, uint256 sellerAmount, uint256 gasRemaining);
 
   modifier raisesError {
     if (raiseError) {
@@ -51,6 +51,16 @@ contract MediatorMock is InkMediator {
   function MediatorMock() public {
     requestMediatorResponse = true;
     mediationExpiryResponse = 1 days;
+    confirmTransactionFeeResponse = 1;
+    confirmTransactionAfterExpiryFeeResponse = 1;
+    confirmTransactionAfterDisputeFeeResponse = 1;
+    confirmTransactionByMediatorFeeResponse = 1;
+    refundTransactionFeeResponse = 1;
+    refundTransactionAfterExpiryFeeResponse = 1;
+    refundTransactionAfterDisputeFeeResponse = 1;
+    refundTransactionByMediatorFeeResponse = 1;
+    settleTransactionByMediatorFeeResponseForBuyer = 1;
+    settleTransactionByMediatorFeeResponseForSeller = 1;
   }
 
   function setRaiseError(bool _raiseError) external {
@@ -85,7 +95,7 @@ contract MediatorMock is InkMediator {
 
   function confirmTransactionFee(uint256 _transactionAmount) external raisesError returns (uint256) {
     _transactionAmount;
-    ConfirmTransactionFeeCalled(_transactionAmount);
+    ConfirmTransactionFeeCalled(_transactionAmount, msg.gas);
     return confirmTransactionFeeResponse;
   }
 
@@ -94,45 +104,78 @@ contract MediatorMock is InkMediator {
   }
 
   function confirmTransactionAfterExpiryFee(uint256 _transactionAmount) external raisesError returns (uint256) {
-    ConfirmTransactionAfterExpiryFeeCalled(_transactionAmount);
+    ConfirmTransactionAfterExpiryFeeCalled(_transactionAmount, msg.gas);
     return confirmTransactionAfterExpiryFeeResponse;
+  }
+
+  function setConfirmTransactionAfterDisputeFeeResponse(uint256 _response) external {
+    confirmTransactionAfterDisputeFeeResponse = _response;
   }
 
   function confirmTransactionAfterDisputeFee(uint256 _transactionAmount) external raisesError returns (uint256) {
     _transactionAmount;
-    ConfirmTransactionAfterDisputeFeeCalled(_transactionAmount);
+    ConfirmTransactionAfterDisputeFeeCalled(_transactionAmount, msg.gas);
     return confirmTransactionAfterDisputeFeeResponse;
   }
 
+  function setConfirmTransactionByMediatorFeeResponse(uint256 _response) external {
+    confirmTransactionByMediatorFeeResponse = _response;
+  }
+
   function confirmTransactionByMediatorFee(uint256 _transactionAmount) external raisesError returns (uint256) {
-    ConfirmTransactionByMediatorFeeCalled(_transactionAmount);
+    ConfirmTransactionByMediatorFeeCalled(_transactionAmount, msg.gas);
     return confirmTransactionByMediatorFeeResponse;
   }
 
+  function setRefundTransactionFeeResponse(uint256 _response) external {
+    refundTransactionFeeResponse = _response;
+  }
+
   function refundTransactionFee(uint256 _transactionAmount) external raisesError returns (uint256) {
-    RefundTransactionFeeCalled(_transactionAmount);
+    RefundTransactionFeeCalled(_transactionAmount, msg.gas);
     return refundTransactionFeeResponse;
   }
 
+  function setRefundTransactionAfterExpiryFeeResponse(uint256 _response) external {
+    refundTransactionAfterExpiryFeeResponse = _response;
+  }
+
   function refundTransactionAfterExpiryFee(uint256 _transactionAmount) external raisesError returns (uint256) {
-    RefundTransactionAfterExpiryFeeCalled(_transactionAmount);
+    RefundTransactionAfterExpiryFeeCalled(_transactionAmount, msg.gas);
     return refundTransactionAfterExpiryFeeResponse;
   }
 
+  function setRefundTransactionAfterDisputeFeeResponse(uint256 _response) external {
+    refundTransactionAfterDisputeFeeResponse = _response;
+  }
+
   function refundTransactionAfterDisputeFee(uint256 _transactionAmount) external raisesError returns (uint256) {
-    RefundTransactionAfterDisputeFeeCalled(_transactionAmount);
+    RefundTransactionAfterDisputeFeeCalled(_transactionAmount, msg.gas);
     return refundTransactionAfterDisputeFeeResponse;
   }
 
+  function setRefundTransactionByMediatorFeeResponse(uint256 _response) external {
+    refundTransactionByMediatorFeeResponse = _response;
+  }
+
   function refundTransactionByMediatorFee(uint256 _transactionAmount) external raisesError returns (uint256) {
-    RefundTransactionByMediatorFeeCalled(_transactionAmount);
+    RefundTransactionByMediatorFeeCalled(_transactionAmount, msg.gas);
     return refundTransactionByMediatorFeeResponse;
+  }
+
+  function setSettleTransactionByMediatorFeeResponseForBuyer(uint256 _response) external {
+    settleTransactionByMediatorFeeResponseForBuyer = _response;
+  }
+
+  function setSettleTransactionByMediatorFeeResponseForSeller(uint256 _response) external {
+    settleTransactionByMediatorFeeResponseForSeller = _response;
   }
 
   function settleTransactionByMediatorFee(uint256 _buyerAmount, uint256 _sellerAmount) external raisesError returns (uint256, uint256) {
     SettleTransactionByMediatorFeeCalled({
       buyerAmount: _buyerAmount,
-      sellerAmount: _sellerAmount
+      sellerAmount: _sellerAmount,
+      gasRemaining: msg.gas
     });
     return (settleTransactionByMediatorFeeResponseForBuyer, settleTransactionByMediatorFeeResponseForSeller);
   }
