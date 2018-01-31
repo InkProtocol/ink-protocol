@@ -17,7 +17,7 @@ contract("InkProtocol", (accounts) => {
         finalState: $util.states.Escalated,
         owner: true
       })
-      mediationExpiry = await mediator.getMediationExpiry()
+      let mediationExpiry = await mediator.getMediationExpiry()
       $util.advanceTime(mediationExpiry.toNumber())
 
       await $util.assertVMExceptionAsync(owner.proxySettleTransaction(protocol.address, transaction.id))
@@ -31,7 +31,7 @@ contract("InkProtocol", (accounts) => {
       } = await $util.buildTransaction(buyer, seller, {
         finalState: $util.states.Escalated
       })
-      mediationExpiry = await mediator.getMediationExpiry()
+      let mediationExpiry = await mediator.getMediationExpiry()
       $util.advanceTime(mediationExpiry.toNumber())
 
       await $util.assertVMExceptionAsync(mediator.proxySettleTransaction(protocol.address, transaction.id))
@@ -46,7 +46,7 @@ contract("InkProtocol", (accounts) => {
       } = await $util.buildTransaction(buyer, seller, {
         finalState: $util.states.Escalated
       })
-      mediationExpiry = await mediator.getMediationExpiry()
+      let mediationExpiry = await mediator.getMediationExpiry()
       $util.advanceTime(mediationExpiry.toNumber())
 
       await $util.assertVMExceptionAsync(policy.proxySettleTransaction(protocol.address, transaction.id))
@@ -60,7 +60,7 @@ contract("InkProtocol", (accounts) => {
       } = await $util.buildTransaction(buyer, seller, {
         finalState: $util.states.Escalated
       })
-      mediationExpiry = await mediator.getMediationExpiry()
+      let mediationExpiry = await mediator.getMediationExpiry()
       $util.advanceTime(mediationExpiry.toNumber())
 
       await $util.assertVMExceptionAsync(protocol.settleTransaction(transaction.id, { from: unknown }))
@@ -75,9 +75,8 @@ contract("InkProtocol", (accounts) => {
         } = await $util.buildTransaction(buyer, seller, {
           finalState: $util.states.Escalated
         })
-
-        mediationExpiry = await mediator.getMediationExpiry()
-        $util.advanceTime(mediationExpiry.toNumber() - 60)
+        let mediationExpiry = await mediator.getMediationExpiry()
+        $util.advanceTime(mediationExpiry.toNumber() - 10)
 
         await $util.assertVMExceptionAsync(protocol.settleTransaction(transaction.id, { from: buyer }))
       })
@@ -90,12 +89,11 @@ contract("InkProtocol", (accounts) => {
         } = await $util.buildTransaction(buyer, seller, {
           finalState: $util.states.Escalated
         })
-
-        mediationExpiry = await mediator.getMediationExpiry()
+        let mediationExpiry = await mediator.getMediationExpiry()
         $util.advanceTime(mediationExpiry.toNumber())
 
         await protocol.settleTransaction(transaction.id, { from: buyer })
-        let events = await $util.filterGetSync(mediator.MediationExpiryCalled({}, { fromBlock: 0 }))
+        let events = await $util.eventsFromContract(mediator, "MediationExpiryCalled")
 
         assert.equal(events.length, 1)
       })
@@ -108,9 +106,8 @@ contract("InkProtocol", (accounts) => {
         } = await $util.buildTransaction(buyer, seller, {
           finalState: $util.states.Escalated
         })
-
-        mediationExpiry = await mediator.getMediationExpiry()
-        $util.advanceTime(mediationExpiry.toNumber() - 60)
+        let mediationExpiry = await mediator.getMediationExpiry()
+        $util.advanceTime(mediationExpiry.toNumber() - 10)
 
         await mediator.setRaiseError(true)
 
@@ -130,8 +127,7 @@ contract("InkProtocol", (accounts) => {
           finalState: $util.states.Escalated,
           amount: amount
         })
-
-        mediationExpiry = await mediator.getMediationExpiry()
+        let mediationExpiry = await mediator.getMediationExpiry()
         $util.advanceTime(mediationExpiry.toNumber())
 
         await protocol.settleTransaction(transaction.id, { from: buyer })
@@ -150,8 +146,7 @@ contract("InkProtocol", (accounts) => {
           finalState: $util.states.Escalated,
           amount: amount
         })
-
-        mediationExpiry = await mediator.getMediationExpiry()
+        let mediationExpiry = await mediator.getMediationExpiry()
         $util.advanceTime(mediationExpiry.toNumber())
 
         await protocol.settleTransaction(transaction.id, { from: buyer })
@@ -168,19 +163,13 @@ contract("InkProtocol", (accounts) => {
         } = await $util.buildTransaction(buyer, seller, {
           finalState: $util.states.Escalated
         })
-
-        mediationExpiry = await mediator.getMediationExpiry()
+        let mediationExpiry = await mediator.getMediationExpiry()
         $util.advanceTime(mediationExpiry.toNumber())
 
         let tx = await protocol.settleTransaction(transaction.id, { from: buyer })
-        let eventArgs = $util.eventFromTx(tx, $util.events.TransactionSettled).args
+        let events = $util.eventsFromTx(tx, $util.events.TransactionSettled)
 
-        let buyerAmount = Math.floor(transaction.amount / 2)
-        let sellerAmount = transaction.amount - buyerAmount
-
-        assert.equal(eventArgs.id, transaction.id)
-        assert.equal(eventArgs.buyerAmount, buyerAmount)
-        assert.equal(eventArgs.sellerAmount, sellerAmount)
+        assert.equal(events.length, 1)
       })
     })
 
@@ -193,9 +182,8 @@ contract("InkProtocol", (accounts) => {
         } = await $util.buildTransaction(buyer, seller, {
           finalState: $util.states.Escalated
         })
-
-        mediationExpiry = await mediator.getMediationExpiry()
-        $util.advanceTime(mediationExpiry.toNumber() - 60)
+        let mediationExpiry = await mediator.getMediationExpiry()
+        $util.advanceTime(mediationExpiry.toNumber() - 10)
 
         await $util.assertVMExceptionAsync(protocol.settleTransaction(transaction.id, { from: seller }))
       })
@@ -208,12 +196,11 @@ contract("InkProtocol", (accounts) => {
         } = await $util.buildTransaction(buyer, seller, {
           finalState: $util.states.Escalated
         })
-
-        mediationExpiry = await mediator.getMediationExpiry()
+        let mediationExpiry = await mediator.getMediationExpiry()
         $util.advanceTime(mediationExpiry.toNumber())
 
         await protocol.settleTransaction(transaction.id, { from: seller })
-        let events = await $util.filterGetSync(mediator.MediationExpiryCalled({}, { fromBlock: 0 }))
+        let events = await $util.eventsFromContract(mediator, "MediationExpiryCalled")
 
         assert.equal(events.length, 1)
       })
@@ -226,9 +213,8 @@ contract("InkProtocol", (accounts) => {
         } = await $util.buildTransaction(buyer, seller, {
           finalState: $util.states.Escalated
         })
-
-        mediationExpiry = await mediator.getMediationExpiry()
-        $util.advanceTime(mediationExpiry.toNumber() - 60)
+        let mediationExpiry = await mediator.getMediationExpiry()
+        $util.advanceTime(mediationExpiry.toNumber() - 10)
 
         await mediator.setRaiseError(true)
 
@@ -248,8 +234,7 @@ contract("InkProtocol", (accounts) => {
           finalState: $util.states.Escalated,
           amount: amount
         })
-
-        mediationExpiry = await mediator.getMediationExpiry()
+        let mediationExpiry = await mediator.getMediationExpiry()
         $util.advanceTime(mediationExpiry.toNumber())
 
         await protocol.settleTransaction(transaction.id, { from: seller })
@@ -268,8 +253,7 @@ contract("InkProtocol", (accounts) => {
           finalState: $util.states.Escalated,
           amount: amount
         })
-
-        mediationExpiry = await mediator.getMediationExpiry()
+        let mediationExpiry = await mediator.getMediationExpiry()
         $util.advanceTime(mediationExpiry.toNumber())
 
         await protocol.settleTransaction(transaction.id, { from: seller })
@@ -286,19 +270,13 @@ contract("InkProtocol", (accounts) => {
         } = await $util.buildTransaction(buyer, seller, {
           finalState: $util.states.Escalated
         })
-
-        mediationExpiry = await mediator.getMediationExpiry()
+        let mediationExpiry = await mediator.getMediationExpiry()
         $util.advanceTime(mediationExpiry.toNumber())
 
         let tx = await protocol.settleTransaction(transaction.id, { from: seller })
-        let eventArgs = $util.eventFromTx(tx, $util.events.TransactionSettled).args
+        let events = $util.eventsFromTx(tx, $util.events.TransactionSettled)
 
-        let buyerAmount = Math.floor(transaction.amount / 2)
-        let sellerAmount = transaction.amount - buyerAmount
-
-        assert.equal(eventArgs.id, transaction.id)
-        assert.equal(eventArgs.buyerAmount, buyerAmount)
-        assert.equal(eventArgs.sellerAmount, sellerAmount)
+        assert.equal(events.length, 1)
       })
     })
   })
