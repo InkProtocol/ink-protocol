@@ -172,15 +172,13 @@ contract InkProtocol is InkProtocolInterface, StandardToken {
   // Event emitted when a transaction is confirmed by the buyer after the
   // mediation expiry.
   event TransactionConfirmedAfterEscalation(
-    uint256 indexed id,
-    uint256 mediatorFee
+    uint256 indexed id
   );
 
   // Event emitted when a transaction is refunded by the seller after the
   // mediation expiry.
   event TransactionRefundedAfterEscalation(
-    uint256 indexed id,
-    uint256 mediatorFee
+    uint256 indexed id
   );
 
   // Event emitted when a transaction is settled by either the buyer or the
