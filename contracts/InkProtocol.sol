@@ -172,15 +172,13 @@ contract InkProtocol is InkProtocolInterface, StandardToken {
   // Event emitted when a transaction is confirmed by the buyer after the
   // mediation expiry.
   event TransactionConfirmedAfterEscalation(
-    uint256 indexed id,
-    uint256 mediatorFee
+    uint256 indexed id
   );
 
   // Event emitted when a transaction is refunded by the seller after the
   // mediation expiry.
   event TransactionRefundedAfterEscalation(
-    uint256 indexed id,
-    uint256 mediatorFee
+    uint256 indexed id
   );
 
   // Event emitted when a transaction is settled by either the buyer or the
@@ -546,7 +544,7 @@ contract InkProtocol is InkProtocolInterface, StandardToken {
     } else if (_finalState == TransactionState.ConfirmedAfterDispute) {
       TransactionConfirmedAfterDispute({ id: _id, mediatorFee: mediatorFee });
     } else if (_finalState == TransactionState.ConfirmedAfterEscalation) {
-      TransactionConfirmedAfterEscalation({ id: _id, mediatorFee: mediatorFee });
+      TransactionConfirmedAfterEscalation({ id: _id });
     } else if (_finalState == TransactionState.ConfirmedAfterExpiry) {
       TransactionConfirmedAfterExpiry({ id: _id, mediatorFee: mediatorFee });
     } else if (_finalState == TransactionState.Refunded) {
@@ -554,7 +552,7 @@ contract InkProtocol is InkProtocolInterface, StandardToken {
     } else if (_finalState == TransactionState.RefundedAfterDispute) {
       TransactionRefundedAfterDispute({ id: _id, mediatorFee: mediatorFee });
     } else if (_finalState == TransactionState.RefundedAfterEscalation) {
-      TransactionRefundedAfterEscalation({ id: _id, mediatorFee: mediatorFee });
+      TransactionRefundedAfterEscalation({ id: _id });
     } else if (_finalState == TransactionState.RefundedAfterExpiry) {
       TransactionRefundedAfterExpiry({ id: _id, mediatorFee: mediatorFee });
     } else if (_finalState == TransactionState.RefundedByMediator) {
