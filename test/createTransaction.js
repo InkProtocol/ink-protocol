@@ -1,103 +1,117 @@
 const $util = require("./util")
 const InkProtocol = artifacts.require("./mocks/InkProtocolMock.sol")
-const MediatorMock = artifacts.require("./mocks/MediatorMock.sol")
-const OwnerMock = artifacts.require("./mocks/OwnerMock.sol")
-const PolicyMock = artifacts.require("./mocks/PolicyMock.sol")
+const Mediator = artifacts.require("./mocks/MediatorMock.sol")
+const Owner = artifacts.require("./mocks/OwnerMock.sol")
+const Policy = artifacts.require("./mocks/PolicyMock.sol")
 
 contract("InkProtocol", (accounts) => {
-  let protocol
-  let mediator
-  let owner
-  let policy
-  let buyer = accounts[1]
-  let seller = accounts[2]
-  let agent = accounts[3]
-  let amount = 100
-  let metadata = $util.metadataToHash({title: "Title"})
+  let protocol,
+      mediator,
+      owner,
+      policy,
+      buyer,
+      seller,
+      amount,
+      metadata
 
   beforeEach(async () => {
     protocol = await InkProtocol.new()
-    mediator = await MediatorMock.new()
-    owner = await OwnerMock.new()
-    policy = await PolicyMock.new()
+    mediator = (await Mediator.new()).address
+    policy = (await Policy.new()).address
+    buyer = accounts[1]
+    seller = accounts[2]
+    owner = 0
+    amount = 100
+    metadata = $util.metadataToHash({ title: "metadata" })
   })
 
   describe("#createTransaction()", () => {
     it("fails when seller address is invalid", async () => {
+      seller = 0
+
       await protocol.transfer(buyer, amount)
 
-      await $util.assertVMExceptionAsync(protocol.createTransaction(0, amount, metadata, policy.address, mediator.address, 0, { from: buyer }))
+      await $util.assertVMExceptionAsync(protocol.createTransaction(seller, amount, metadata, policy, mediator, owner, { from: buyer }))
     })
 
     it("fails when seller and buyer are the same", async () => {
+      seller = buyer
+
       await protocol.transfer(buyer, amount)
 
-      await $util.assertVMExceptionAsync(protocol.createTransaction(seller, amount, metadata, policy.address, mediator.address, 0, { from: seller }))
+      await $util.assertVMExceptionAsync(protocol.createTransaction(seller, amount, metadata, policy, mediator, owner, { from: buyer }))
     })
 
     it("fails when owner and buyer are the same", async () => {
+      owner = buyer
+
       await protocol.transfer(buyer, amount)
 
-      await $util.assertVMExceptionAsync(protocol.createTransaction(seller, amount, metadata, policy.address, mediator.address, buyer, { from: buyer }))
+      await $util.assertVMExceptionAsync(protocol.createTransaction(seller, amount, metadata, policy, mediator, owner, { from: buyer }))
     })
 
     it("fails when owner and seller are the same", async () => {
+      owner = seller
+
       await protocol.transfer(buyer, amount)
 
-      await $util.assertVMExceptionAsync(protocol.createTransaction(seller, amount, metadata, policy.address, mediator.address, seller, { from: buyer }))
+      await $util.assertVMExceptionAsync(protocol.createTransaction(seller, amount, metadata, policy, mediator, owner, { from: buyer }))
     })
 
     it("fails when amount is 0", async () => {
+      amount = 0
+
       await protocol.transfer(buyer, amount)
 
-      await $util.assertVMExceptionAsync(protocol.createTransaction(seller, 0, metadata, policy.address, mediator.address, 0, { from: buyer }))
+      await $util.assertVMExceptionAsync(protocol.createTransaction(seller, amount, metadata, policy, mediator, owner, { from: buyer }))
+    })
+
+    it("fails when buyer does not have enough tokens", async () => {
+      await protocol.transfer(buyer, amount - 1)
+
+      await $util.assertVMExceptionAsync(protocol.createTransaction(seller, amount, metadata, policy, mediator, owner, { from: buyer }))
     })
 
     it("fails when mediator is not specified but policy is", async () => {
+      mediator = 0
+
       await protocol.transfer(buyer, amount)
 
-      await $util.assertVMExceptionAsync(protocol.createTransaction(seller, amount, metadata, policy.address, 0, 0, { from: buyer }))
-    })
-
-    it("fails when policy is not specified but mediator is", async () => {
-      await protocol.transfer(buyer, amount)
-
-      await $util.assertVMExceptionAsync(protocol.createTransaction(seller, amount, metadata, 0, mediator.address, 0, { from: buyer }))
+      await $util.assertVMExceptionAsync(protocol.createTransaction(seller, amount, metadata, policy, mediator, owner, { from: buyer }))
     })
 
     it("increments the global transaction ID for the next transaction", async () => {
-      let xfer = await protocol.transfer(buyer, amount * 2)
-      let tx0 = await protocol.createTransaction(seller, amount, metadata, policy.address, mediator.address, 0, { from: buyer })
-      let tx1 = await protocol.createTransaction(seller, amount, metadata, policy.address, mediator.address, 0, { from: buyer })
-      let eventArgs0 = $util.eventFromTx(tx0, $util.events.TransactionInitiated).args
-      let eventArgs1 = $util.eventFromTx(tx1, $util.events.TransactionInitiated).args
+      await protocol.transfer(buyer, amount * 2)
 
-      assert.equal(eventArgs0.id.toNumber(), 0)
-      assert.equal(eventArgs1.id.toNumber(), 1)
+      let tx1 = await protocol.createTransaction(seller, amount, metadata, policy, mediator, owner, { from: buyer })
+      let eventArgs1 = $util.eventFromTx(tx1, $util.events.TransactionInitiated).args
+      assert.equal(eventArgs1.id.toNumber(), 0)
+
+      let tx2 = await protocol.createTransaction(seller, amount, metadata, policy, mediator, owner, { from: buyer })
+      let eventArgs2 = $util.eventFromTx(tx2, $util.events.TransactionInitiated).args
+      assert.equal(eventArgs2.id.toNumber(), 1)
     })
 
     it("emits the TransactionInitiated event", async () => {
-      let xfer = await protocol.transfer(buyer, amount)
-      let tx = await protocol.createTransaction(seller, amount, metadata, policy.address, mediator.address, 0, { from: buyer })
+      await protocol.transfer(buyer, amount)
+
+      let tx = await protocol.createTransaction(seller, amount, metadata, policy, mediator, owner, { from: buyer })
       let eventArgs = $util.eventFromTx(tx, $util.events.TransactionInitiated).args
 
       assert.equal(eventArgs.id.toNumber(), 0)
-      assert.equal(eventArgs.owner, 0)
+      assert.equal(eventArgs.owner, owner)
       assert.equal(eventArgs.buyer, buyer)
       assert.equal(eventArgs.seller, seller)
       assert.equal(eventArgs.amount, amount)
-      assert.equal(eventArgs.policy, policy.address)
-      assert.equal(eventArgs.mediator, mediator.address)
+      assert.equal(eventArgs.policy, policy)
+      assert.equal(eventArgs.mediator, mediator)
       assert.equal(eventArgs.metadata, metadata)
     })
 
     it("transfers buyer's tokens to escrow", async () => {
-      let xfer = await protocol.transfer(buyer, amount)
-      let eventArgs = $util.eventFromTx(xfer, $util.events.Transfer).args
+      await protocol.transfer(buyer, amount)
 
-      let tx = await protocol.createTransaction(seller, amount, metadata, policy.address, mediator.address, 0, { from: buyer })
-
-      eventArgs = $util.eventFromTx(tx, $util.events.TransactionInitiated).args
+      await protocol.createTransaction(seller, amount, metadata, policy, mediator, owner, { from: buyer })
 
       assert.equal(await $util.getBalance(buyer, protocol), 0)
       assert.equal(await $util.getBalance(protocol.address, protocol), amount)
@@ -105,55 +119,74 @@ contract("InkProtocol", (accounts) => {
 
     describe("when mediator is specified", () => {
       it("fails when policy is not specified", async () => {
-        let policyAddress = 0;
+        policy = 0
+
         await protocol.transfer(buyer, amount)
 
-        await $util.assertVMExceptionAsync(protocol.createTransaction(seller, amount, metadata, policyAddress, mediator.address, 0, { from: buyer }))
+        await $util.assertVMExceptionAsync(protocol.createTransaction(seller, amount, metadata, policy, mediator, owner, { from: buyer }))
       })
 
       it("fails when mediator rejects the transaction", async () => {
-        let xfer = await protocol.transfer(buyer, amount)
+        await protocol.transfer(buyer, amount)
 
-        await mediator.setRequestMediatorResponse(false)
-        await $util.assertVMExceptionAsync(protocol.createTransaction(seller, amount, metadata, policy.address, mediator.address, 0, { from: buyer }))
+        await Mediator.at(mediator).setRequestMediatorResponse(false)
+
+        await $util.assertVMExceptionAsync(protocol.createTransaction(seller, amount, metadata, policy, mediator, owner, { from: buyer }))
       })
 
       it("passes the transaction's id, amount, and owner to the mediator", async () => {
-        let xfer = await protocol.transfer(buyer, amount)
-        let tx = await protocol.createTransaction(seller, amount, metadata, policy.address, mediator.address, 0, { from: buyer })
-        await $util.eventFromContract(mediator, "RequestMediatorCalled", { id: 0, amount: amount, owner: 0 })
+        await protocol.transfer(buyer, amount)
+
+        await protocol.createTransaction(seller, amount, metadata, policy, mediator, owner, { from: buyer })
+
+        let eventArgs = (await $util.eventFromContract(Mediator.at(mediator), "RequestMediatorCalled")).args
+
+        assert.equal(eventArgs.transactionId.toNumber(), 0)
+        assert.equal(eventArgs.transactionAmount.toNumber(), amount)
+        assert.equal(eventArgs.transactionOwner, 0)
       })
 
       it("emits the TransactionInitiated event with mediator and policy", async () => {
-        let xfer = await protocol.transfer(buyer, amount)
-        let tx = await protocol.createTransaction(seller, amount, metadata, policy.address, mediator.address, 0, { from: buyer })
+        await protocol.transfer(buyer, amount)
+
+        let tx = await protocol.createTransaction(seller, amount, metadata, policy, mediator, owner, { from: buyer })
         let eventArgs = $util.eventFromTx(tx, $util.events.TransactionInitiated).args
 
-        assert.equal(eventArgs.policy, policy.address)
-        assert.equal(eventArgs.mediator, mediator.address)
+        assert.equal(eventArgs.policy, policy)
+        assert.equal(eventArgs.mediator, mediator)
       })
     })
 
     describe("when owner is specified", () => {
+      beforeEach(async () => {
+        owner = (await Owner.new()).address
+      })
+
       it("passes the transaction's id and buyer to the owner", async () => {
-        let xfer = await protocol.transfer(buyer, amount)
-        let tx = await protocol.createTransaction(seller, amount, metadata, policy.address, mediator.address, owner.address, { from: buyer })
-        await $util.eventFromContract(owner, "AuthorizeTransactionCalled", { id: 0, buyer: 0 })
+        await protocol.transfer(buyer, amount)
+
+        let tx = await protocol.createTransaction(seller, amount, metadata, policy, mediator, owner, { from: buyer })
+        let eventArgs = (await $util.eventFromContract(Owner.at(owner), "AuthorizeTransactionCalled")).args
+
+        assert.equal(eventArgs.transactionId.toNumber(), 0)
+        assert.equal(eventArgs.buyer, buyer)
       })
 
       it("emits the TransactionInitiated event with owner", async () => {
-        let xfer = await protocol.transfer(buyer, amount)
-        let tx = await protocol.createTransaction(seller, amount, metadata, policy.address, mediator.address, owner.address, { from: buyer })
+        await protocol.transfer(buyer, amount)
+
+        let tx = await protocol.createTransaction(seller, amount, metadata, policy, mediator, owner, { from: buyer })
         let eventArgs = $util.eventFromTx(tx, $util.events.TransactionInitiated).args
 
-        assert.equal(eventArgs.owner, owner.address)
+        assert.equal(eventArgs.owner, owner)
       })
 
       it("fails when the owner rejects the transaction", async () => {
-        let xfer = await protocol.transfer(buyer, amount)
+        await protocol.transfer(buyer, amount)
 
-        await owner.setAuthorizeTransactionResponse(false)
-        await $util.assertVMExceptionAsync(protocol.createTransaction(seller, amount, metadata, policy.address, mediator.address, owner.address, { from: buyer }))
+        await Owner.at(owner).setAuthorizeTransactionResponse(false)
+
+        await $util.assertVMExceptionAsync(protocol.createTransaction(seller, amount, metadata, policy, mediator, owner, { from: buyer }))
       })
     })
   })
