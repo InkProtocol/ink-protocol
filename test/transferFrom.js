@@ -2,11 +2,11 @@ const $util = require("./util")
 const InkProtocol = artifacts.require("./mocks/InkProtocolMock.sol")
 
 contract("InkProtocol", (accounts) => {
-  let protocol
-  let sender
-  let recipient
-  let agent
-  let amount
+  let protocol,
+      sender,
+      recipient,
+      agent,
+      amount
 
   beforeEach(async () => {
     protocol = await InkProtocol.new()
@@ -24,8 +24,6 @@ contract("InkProtocol", (accounts) => {
       await protocol.approve(agent, amount, { from: sender })
 
       await $util.assertVMExceptionAsync(protocol.transferFrom(sender, recipient, amount, { from: agent }))
-      assert.equal(await $util.getBalance(sender, protocol), amount)
-      assert.equal(await $util.getBalance(recipient, protocol), 0)
     })
 
     it("succeeds when recipient is another address", async () => {
